@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mbax6418-ai-jukebox"
+version = "0.1.0"
+description = "MBAX 6418 Assignment 3 — AI Jukebox: custom song generation, matching cover art, and spoken AI DJ commentary"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv>=1.0",      # load class-service endpoints/key from .env
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",     # guard tests against hanging service calls
+]
+
+[tool.setuptools]
+packages = ["jukebox"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 120
