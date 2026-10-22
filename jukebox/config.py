@@ -18,6 +18,10 @@ class Settings:
     cover_art_url: str  # port 9006 - FLUX cover art
     music_url: str  # port 9007 - ACE-Step song generation
     speech_url: str  # port 9008 - Chatterbox TTS
+    llm_model: str
+    cover_art_model: str
+    music_model: str
+    speech_model: str
 
 
 def load_settings(env_file: str | None = None) -> Settings:
@@ -33,4 +37,8 @@ def load_settings(env_file: str | None = None) -> Settings:
         cover_art_url=os.environ["COVER_ART_URL"],
         music_url=os.environ["MUSIC_URL"],
         speech_url=os.environ["SPEECH_URL"],
+        llm_model=os.environ["LLM_MODEL"],
+        cover_art_model=os.environ["COVER_ART_MODEL"],
+        music_model=os.environ["MUSIC_MODEL"],
+        speech_model=os.environ["SPEECH_MODEL"],
     )
