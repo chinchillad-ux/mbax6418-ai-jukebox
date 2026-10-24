@@ -6,12 +6,20 @@ sentences specific to a Track and stores them on the Track.
 given text, using the bundled default voice or a user-supplied MP3/WAV
 voice reference. Generated audio is saved under ignored ``data/dj/``;
 voice-reference copies are kept only under ignored ``data/voice-refs/``.
+
+Before a generated MP3 is kept it is decoded in full, not only header
+checked: this requires the ffmpeg binary on PATH (afinfo on macOS is the
+fallback). Interrupted downloads and unreadable voice references surface
+as readable ``DJError`` failures without leaving partial files.
 """
 from __future__ import annotations
 
 import base64
+from http.client import HTTPException
 import json
 from pathlib import Path
+import shutil
+import subprocess
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -33,7 +41,7 @@ def _request(method: str, url: str, key: str, payload: dict[str, Any] | None = N
     try:
         with urlopen(Request(url, data=data, headers=headers, method=method), timeout=timeout) as response:
             return response.read()
-    except (HTTPError, URLError, TimeoutError, OSError, ValueError):
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError, HTTPException):
         raise DJError(f"The {service} is unavailable. Please try again later.") from None
 
 
@@ -106,20 +114,22 @@ def _store_voice_reference(voice_ref_path: str) -> str:
     the repository. Returns the canonical local path.
     """
     source = Path(voice_ref_path)
-    if not source.is_file():
-        raise DJError("The voice reference file is missing.")
-    if source.stat().st_size == 0:
-        raise DJError("The voice reference file is empty.")
-    suffix = source.suffix.lower()
-    if suffix not in {".mp3", ".wav"}:
-        raise DJError("Voice references must be MP3 or WAV files.")
-    references_dir = Path("data/voice-refs")
     try:
+        if not source.is_file():
+            raise DJError("The voice reference file is missing.")
+        if source.stat().st_size == 0:
+            raise DJError("The voice reference file is empty.")
+        suffix = source.suffix.lower()
+        if suffix not in {".mp3", ".wav"}:
+            raise DJError("Voice references must be MP3 or WAV files.")
+        references_dir = Path("data/voice-refs")
         references_dir.mkdir(parents=True, exist_ok=True)
         if source.resolve().is_relative_to(references_dir.resolve()):
             return str(source)
+    except DJError:
+        raise
     except OSError:
-        raise DJError("Could not prepare the voice reference.") from None
+        raise DJError("The voice reference file could not be read.") from None
     destination = references_dir / f"{uuid4().hex}{suffix}"
     temporary = destination.with_suffix(destination.suffix + ".tmp")
     try:
@@ -135,7 +145,11 @@ def _store_voice_reference(voice_ref_path: str) -> str:
 def _reference_data_uri(path: str) -> str:
     """Base64 data URI of a reference audio file for the ``ref_audio`` field."""
     mime = "audio/mpeg" if Path(path).suffix.lower() == ".mp3" else "audio/wav"
-    return f"data:{mime};base64," + base64.b64encode(Path(path).read_bytes()).decode()
+    try:
+        data = Path(path).read_bytes()
+    except OSError:
+        raise DJError("The voice reference file could not be read.") from None
+    return f"data:{mime};base64," + base64.b64encode(data).decode()
 
 
 def _looks_like_audio(data: bytes) -> bool:
@@ -145,6 +159,36 @@ def _looks_like_audio(data: bytes) -> bool:
     if data.startswith(b"ID3"):
         return True
     return len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0
+
+
+def _validate_audio(path: Path) -> None:
+    """Decode the ENTIRE audio file so header-valid but unplayable output
+    cannot be reported as success.
+
+    ffmpeg decoding every sample to a null sink is the strongest check;
+    afinfo (macOS) is the fallback. If neither decoder is on PATH the file
+    is rejected rather than silently accepted.
+    """
+    try:
+        if path.stat().st_size == 0:
+            raise DJError("The speech service returned an empty audio file.")
+    except OSError:
+        raise DJError("The speech service returned an empty audio file.") from None
+    try:
+        if shutil.which("ffmpeg"):
+            subprocess.run(
+                ["ffmpeg", "-v", "error", "-i", str(path), "-f", "null", "-"],
+                capture_output=True, check=True, timeout=60,
+            )
+            return
+        if shutil.which("afinfo"):
+            subprocess.run(["afinfo", str(path)], capture_output=True, check=True, timeout=60)
+            return
+    except (subprocess.SubprocessError, OSError):
+        raise DJError("The speech service returned audio that could not be played.") from None
+    raise DJError(
+        "Generated audio validation requires ffmpeg on PATH (or afinfo on macOS)."
+    )
 
 
 def speak(text: str, voice_ref_path: str | None = None) -> str:
@@ -185,6 +229,7 @@ def speak(text: str, voice_ref_path: str | None = None) -> str:
     try:
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary.write_bytes(audio)
+        _validate_audio(temporary)
         temporary.replace(destination)
     except OSError:
         raise DJError("Could not save the DJ audio. Check disk space and permissions.") from None

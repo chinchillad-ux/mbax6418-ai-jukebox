@@ -2,8 +2,10 @@
 import base64
 from dataclasses import replace
 from email.message import Message
+from http.client import IncompleteRead, RemoteDisconnected
 import json
 from pathlib import Path
+import subprocess
 from unittest.mock import Mock
 from urllib.error import HTTPError, URLError
 
@@ -146,6 +148,7 @@ def speech_calls(monkeypatch, bodies):
     monkeypatch.setattr(dj, "load_settings", lambda: SETTINGS)
     replies = iter(bodies)
     monkeypatch.setattr(dj, "_request", lambda method, url, key, payload=None, timeout=45, service="service": (calls.append((url, payload)) or next(replies)))
+    monkeypatch.setattr(dj, "_validate_audio", lambda path: None)
     return calls
 
 
@@ -308,3 +311,117 @@ def test_speak_rejects_empty_text(monkeypatch):
     with pytest.raises(dj.DJError, match="text"):
         dj.speak("   ")
     mock.assert_not_called()
+
+
+# --- Review fixes: full audio decode, interrupted responses, voice-ref errors
+
+def test_validate_audio_full_decode_success(monkeypatch, tmp_path):
+    file = tmp_path / "ok.mp3"
+    file.write_bytes(b"ID3real-mp3-bytes")
+    monkeypatch.setattr(dj.shutil, "which", lambda name: name)
+    run = Mock(return_value=None)
+    monkeypatch.setattr(dj.subprocess, "run", run)
+    dj._validate_audio(file)  # must not raise
+    command = run.call_args.args[0]
+    assert command[0] == "ffmpeg"
+    assert "-f" in command and "null" in command  # decodes the WHOLE file
+    assert str(file) in command
+
+
+def test_validate_audio_rejects_undecodable(monkeypatch, tmp_path):
+    file = tmp_path / "bad.mp3"
+    file.write_bytes(b"ID3garbage-not-real-audio")
+    monkeypatch.setattr(dj.shutil, "which", lambda name: name)
+    monkeypatch.setattr(dj.subprocess, "run", Mock(side_effect=subprocess.CalledProcessError(1, "ffmpeg")))
+    with pytest.raises(dj.DJError, match="could not be played"):
+        dj._validate_audio(file)
+
+
+def test_validate_audio_macos_afinfo_fallback(monkeypatch, tmp_path):
+    file = tmp_path / "ok.mp3"
+    file.write_bytes(b"ID3real")
+    monkeypatch.setattr(dj.shutil, "which", lambda name: "afinfo" if name == "afinfo" else None)
+    run = Mock(return_value=None)
+    monkeypatch.setattr(dj.subprocess, "run", run)
+    dj._validate_audio(file)
+    assert run.call_args.args[0][0] == "afinfo"
+
+
+def test_validate_audio_requires_decoder(monkeypatch, tmp_path):
+    file = tmp_path / "x.mp3"
+    file.write_bytes(b"data")
+    monkeypatch.setattr(dj.shutil, "which", lambda name: None)
+    with pytest.raises(dj.DJError, match="ffmpeg"):
+        dj._validate_audio(file)
+
+
+def test_speak_rejects_undecodable_audio_and_cleans_up(monkeypatch, tmp_path):
+    # Reproduces the review finding: header-valid bytes that a decoder rejects.
+    speech_calls(monkeypatch, [AUDIO])
+    monkeypatch.setattr(dj, "_validate_audio", Mock(side_effect=dj.DJError("The speech service returned audio that could not be played.")))
+    with pytest.raises(dj.DJError, match="could not be played"):
+        dj.speak("Header passes, decoder rejects.")
+    assert not Path("data/dj").exists() or not list(Path("data/dj").glob("*"))
+    assert not list(tmp_path.rglob("*.tmp"))
+
+
+def test_speak_real_validator_rejects_unplayable(monkeypatch, tmp_path):
+    # Real _validate_audio path with a failing decoder: error + no leftovers.
+    monkeypatch.setattr(dj, "load_settings", lambda: SETTINGS)
+    replies = iter([AUDIO])
+    monkeypatch.setattr(dj, "_request", lambda method, url, key, payload=None, timeout=45, service="service": next(replies))
+    monkeypatch.setattr(dj.shutil, "which", lambda name: name)
+    monkeypatch.setattr(dj.subprocess, "run", Mock(side_effect=subprocess.CalledProcessError(1, "ffmpeg")))
+    with pytest.raises(dj.DJError, match="could not be played"):
+        dj.speak("Unplayable audio.")
+    assert not Path("data/dj").exists() or not list(Path("data/dj").glob("*"))
+    assert not list(tmp_path.rglob("*.tmp"))
+
+
+@pytest.mark.parametrize("failure", [IncompleteRead(b"partial"), RemoteDisconnected()])
+def test_speak_interrupted_response_is_readable(monkeypatch, tmp_path, failure):
+    # Reproduces the review finding: raw IncompleteRead escaping the app.
+    monkeypatch.setattr(dj, "load_settings", lambda: SETTINGS)
+    monkeypatch.setattr(dj, "urlopen", Mock(side_effect=failure))
+    with pytest.raises(dj.DJError, match="speech service") as error:
+        dj.speak("Interrupted download.")
+    assert "IncompleteRead" not in str(error.value)
+    assert not Path("data/dj").exists() or not list(Path("data/dj").glob("*"))
+
+
+def test_commentary_interrupted_response_is_readable(monkeypatch, track):
+    monkeypatch.setattr(dj, "load_settings", lambda: SETTINGS)
+    monkeypatch.setattr(dj, "urlopen", Mock(side_effect=IncompleteRead(b"partial")))
+    with pytest.raises(dj.DJError, match="commentary service"):
+        dj.commentary_for_track(track)
+    assert track.dj_commentary is None
+
+
+def test_voice_reference_permission_error_on_store(monkeypatch, tmp_path):
+    # Reproduces the review finding: raw PermissionError reading a reference.
+    reference = tmp_path / "ref.mp3"
+    reference.write_bytes(b"ID3reference-voice")
+    monkeypatch.setattr(Path, "read_bytes", Mock(side_effect=PermissionError("access denied")))
+    request = Mock()
+    monkeypatch.setattr(dj, "load_settings", lambda: SETTINGS)
+    monkeypatch.setattr(dj, "_request", request)
+    with pytest.raises(dj.DJError, match="voice reference") as error:
+        dj.speak("Hello.", voice_ref_path=str(reference))
+    assert not isinstance(error.value, PermissionError)
+    request.assert_not_called()
+    assert not list(tmp_path.rglob("*.tmp"))
+
+
+def test_voice_reference_permission_error_on_data_uri(monkeypatch, tmp_path):
+    # In-place reference under data/voice-refs/ is read during encoding.
+    refs_dir = Path("data/voice-refs")
+    refs_dir.mkdir(parents=True)
+    existing = refs_dir / "kept.mp3"
+    existing.write_bytes(b"ID3reference")
+    monkeypatch.setattr(Path, "read_bytes", Mock(side_effect=PermissionError("locked")))
+    request = Mock()
+    monkeypatch.setattr(dj, "load_settings", lambda: SETTINGS)
+    monkeypatch.setattr(dj, "_request", request)
+    with pytest.raises(dj.DJError, match="voice reference"):
+        dj.speak("Hello.", voice_ref_path=str(existing))
+    request.assert_not_called()

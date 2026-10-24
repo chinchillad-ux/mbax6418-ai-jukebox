@@ -70,19 +70,43 @@ Commentary prompt sent to Qwen:
 - `git check-ignore -v` matched the `.gitignore` `data/` rule for the two DJ
   audio files and the generated song; `git ls-files` reports none of them as
   tracked.
-- Full automated suite: **97 passed** (45 new `tests/test_dj.py` cases:
+- Full automated suite: **108 passed** (56 `tests/test_dj.py` cases:
   commentary grounded in track metadata, commentary saved on the correct
   Track, default-voice payload and saved file, custom MP3/WAV references,
   reference placement under `data/voice-refs/`, malformed service responses,
-  readable failures, cleanup of incomplete files).
+  readable failures, cleanup of incomplete files, full-decode audio
+  validation, interrupted downloads, and voice-reference permission errors).
+
+## Review follow-up (PR #13 review, changes requested)
+
+Brandon independently verified the suite and reported three gaps; all three
+are fixed with regression tests:
+
+- Generated audio is decoded in full before it is kept (ffmpeg null-sink
+  decode of every sample; afinfo fallback on macOS). Header-valid but
+  unplayable output is rejected with a readable error and no file remains.
+  Dependency documented in the `jukebox/dj.py` module docstring: ffmpeg on
+  PATH (afinfo on macOS).
+- Interrupted downloads raise readable failures instead of raw
+  `IncompleteRead`/`RemoteDisconnected` exceptions; no partial files remain.
+- Unreadable voice references raise a readable error without exposing file
+  paths or contents; no raw `PermissionError` escapes.
+
+Live re-verification against the class services (same session, 2026-10-24):
+one default-voice speech generation succeeded — saved under `data/dj/`,
+69,932 bytes, ffprobe `mp3`, duration 4.28 s, and passed the application's
+own full ffmpeg decode — plus one custom-voice generation using that MP3 as
+the reference (39,212 bytes, also decode-validated); the reference copy
+under `data/voice-refs/` was deleted afterwards.
 
 ## Limitations
 
 - Commentary quality is assessed by reading the generated text; there is no
   objective measure of "DJ-likeness". Sentence count was requested as 2-4 but
   is not programmatically enforced (the model returned 2).
-- Audio correctness was verified by ffprobe decode/duration and file size,
-  not by human listening.
+- Audio correctness is enforced by a full ffmpeg decode before any generated
+  file is kept, supplemented by ffprobe duration/size evidence; neither
+  replaces human listening.
 - The voice clone was verified end-to-end with a service-generated reference,
   not a human voice recording; a human recording (MP3/WAV, 1-60 s per the
   service) is expected to work through the same `ref_audio` path.
