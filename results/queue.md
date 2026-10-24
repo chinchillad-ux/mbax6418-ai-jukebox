@@ -1,9 +1,9 @@
-# Issue #5 draft: library and playback logic
+# Issue #5: library and playback logic
 
 Owner: BAAndrewsDev. Tested on 2026-10-23 against main commit
 `d21365f6ef383543eac06b8dcedd935bb32cd62f` plus this draft's changes.
 
-## Completed automated checks
+## Initial draft automated checks (historical)
 
 Command from the repository root, after `uv sync --extra dev`:
 
@@ -85,20 +85,27 @@ file beside the destination and replacing atomically preserves the previous
 library on failure. This is a single-controller library, not a concurrent
 multi-process database; simultaneous writers are unsupported.
 
-## Pending before issue #5 can be completed
+## Ready-for-review status (2026-10-24)
 
-- Merge cover art (#3 / PR #11) and DJ commentary/speech (#4), then rebase this
-  draft and verify their actual function contracts.
-- Review the teammate's DJ PR as BAAndrewsDev. No DJ PR existed when this draft
-  was prepared, so no approval or completed teammate review is claimed.
-- Use those merged functions and the real class endpoints to generate three
-  original sample songs and covers, including at least one vocal with
-  AI-generated lyrics and one instrumental. No samples were generated here.
-- Commit only the required first-party sample assets and `samples.json` under
-  `assets/samples/`. Keep all session media and reference uploads in `data/`.
-- Record exact sample prompts, parameters, steps, and actual outcomes in
-  `results/samples.md`; do not invent passing manual results.
-- Integrate the samples/library/queue, test real playback in the UI, rerun the
-  full suite, and request Delcers' review when the PR is ready.
+The original draft dependencies are now merged: cover art (#3 / PR #11) and
+DJ commentary/speech (#4 / PR #13). Main is integrated into this branch.
+BAAndrewsDev reviewed the DJ PR and its fixes before it merged.
 
-This draft does **not** close issue #5 or claim its sample/integration checks.
+Three real class-service samples, their FLUX covers with exact title overlays,
+DJ clips, and full Track manifest are included under `assets/samples/`. The vocal
+sample uses AI-generated lyrics; the other two samples are instrumental. Exact
+inputs, generation outcomes, cover corrections, and verification details appear
+in `results/samples.md`.
+
+Current verification: **11 real-sample integration tests passed; 155 tests passed
+in the full suite**. Integration tests decode actual assets, measure actual clip
+durations, reload a temporary persisted library, and exercise Player with a
+silent transport and simulated clock. They verify ordering/non-overlap at the
+controller boundary, pause/resume, skip, automatic advancement, late ticks, and
+missing-file recovery. Sample listening and cover feedback were provided by the
+user in this chat, as documented in `results/samples.md`.
+
+The logic-only scope of #5 is ready for Delcers' review. The actual audio adapter,
+browser controls/autoplay, and audible end-to-end sequence verification remain
+in #6. They are not claimed by these automated tests. Do not merge without the
+required teammate review.
