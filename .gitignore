@@ -20,6 +20,10 @@ env/
 # NEVER commit these. The only committed media is under assets/samples/.
 data/
 
+# AI DJ runtime output (issue #4): spoken commentary audio and voice references.
+data/dj/
+data/voice-refs/
+
 # Test / tooling artifacts
 .pytest_cache/
 .coverage
