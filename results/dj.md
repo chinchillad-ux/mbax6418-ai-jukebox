@@ -1,25 +1,23 @@
 # AI DJ verification (issue #4)
 
-Manual endpoint checks ran on 2026-10-24 (UTC-06:00). Credentials are not
+Manual service checks ran on 2026-10-24 (UTC-06:00). Credentials are not
 printed, hardcoded, logged, or committed: the API key lives only in the
-local gitignored `.env`, read by the existing `load_settings()`. Port 9000
-was never called. The endpoint handout was consulted for request formats
-only and remains outside the repository.
+local gitignored `.env`, read by the existing `load_settings()`. The
+reserved agent endpoint was never called. The class endpoint handout was
+consulted for request formats only and remains outside the repository.
 
 ## Run and actual inputs
 
-- Branch: `feat/ai-dj` (created from `main`; no `feat/ai-dj` branch existed at
-  the start of this issue).
+- Branch: `feat/ai-dj` (created from `main`; no `feat/ai-dj` branch existed
+  at the start of this issue).
 - Services (live, verified before coding):
-  - Qwen commentary (LLM): `http://dobolyi.com:9001/v1`, model
-    `cyankiwi/Qwen3.6-35B-A3B-AWQ-4bit`, `POST /chat/completions`
-    (OpenAI-compatible messages payload, temperature 0.7).
-  - Chatterbox speech (TTS): `http://dobolyi.com:9008`, model
-    `chatterbox-v3`, `POST /v1/audio/speech` with `input`, `voice`,
-    `language_id`, `response_format`; `ref_audio` (base64 data URI) for the
-    custom-voice case. Formats confirmed against the service's own
-    `/openapi.json`.
-- Real generated Track (ACE-Step, exactly one generation): title
+  - Commentary: class Qwen service (chat-completions-style JSON request,
+    temperature 0.7). Request shape confirmed against the published service
+    API schema.
+  - Speech: class Chatterbox speech service (text-to-speech; default voice,
+    or an MP3/WAV voice reference passed as base64 `ref_audio`). Request
+    shape confirmed against the published service API schema.
+- Real generated Track (exactly one song generation): title
   `Calm Ambient Electronic`, style `ambient electronic`, mood `calm`,
   10 seconds, instrumental (`is_vocal=False`), saved under
   `data/songs/a3b8ec007dda4b2a993014353645eb9b.mp3`.
@@ -65,10 +63,10 @@ Commentary prompt sent to Qwen:
   `data/voice-refs/ab0111e4a9764839b9b0efee8f7c8ec6.mp3`, the request carried
   a base64 `data:audio/mpeg;...` `ref_audio`, and the clone was saved to
   `data/dj/1c9ed57f91ba43178da58dd877fe5e2d.mp3`; 47,276 bytes; ffprobe
-  reports `mp3`, duration 2.88 s (text: "Thanks for listening. That was the
-  custom voice check.").
-- After the run, the copied reference was deleted; `data/voice-refs/` is empty
-  and nothing voice-related is committed.
+  reports `mp3`, duration 2.88 s (spoken text: "Thanks for listening. That
+  was the custom voice check.").
+- After the run, the copied reference was deleted; `data/voice-refs/` is
+  empty and nothing voice-related is committed.
 - `git check-ignore -v` matched the `.gitignore` `data/` rule for the two DJ
   audio files and the generated song; `git ls-files` reports none of them as
   tracked.

@@ -1,8 +1,8 @@
 """AI DJ commentary (Qwen) and speech (Chatterbox) for the jukebox.
 
-``commentary_for_track`` asks the class Qwen service (port 9001) for 2-4
-spoken sentences specific to a Track and stores them on the Track.
-``speak`` asks the class Chatterbox service (port 9008) for an MP3 of the
+``commentary_for_track`` asks the class Qwen service for 2-4 spoken
+sentences specific to a Track and stores them on the Track.
+``speak`` asks the class Chatterbox speech service for an MP3 of the
 given text, using the bundled default voice or a user-supplied MP3/WAV
 voice reference. Generated audio is saved under ignored ``data/dj/``;
 voice-reference copies are kept only under ignored ``data/voice-refs/``.

@@ -16,8 +16,8 @@ from jukebox.models import Track
 
 SETTINGS = Settings(
     "dummy-key", "http://example.test:9001/v1", "x",
-    "x", "http://example.test:9008", "qwen",
-    "x", "x", "chatterbox-v3",
+    "x", "http://example.test:9008", "test-llm",
+    "x", "x", "test-speech",
 )
 
 
