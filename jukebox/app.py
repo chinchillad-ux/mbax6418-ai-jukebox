@@ -508,16 +508,41 @@ def build_app():
             justify-content: start !important;
             gap: 16px !important;
         }
+
+        
+        #jukebox-hero {
+            background: linear-gradient(
+                115deg,
+                #0F172A 0%,
+                #0F766E 60%,
+                #14B8A6 100%
+            );
+            border-radius: 20px;
+            padding: 36px 40px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(15, 118, 110, 0.15);
+        }
+
+        #jukebox-hero h1,
+        #jukebox-hero p,
+        #jukebox-hero strong {
+            color: #FFFFFF !important;
+        }
+
         """
 
 
     ) as demo:
 
+        
         gr.Markdown(
-            "# 🎵 AI Jukebox\n"
-            "Create original music, build your collection, "
-            "and let your AI DJ take over."
+            "# 🎵 AI Jukebox\n\n"
+            "**Your music. Your mood. Made with AI.**\n\n"
+            "Create original songs, discover your sound, "
+            "and let your personal AI DJ take over.",
+            elem_id="jukebox-hero"
         )
+
 
         
         with gr.Tab("🎶 Create a Song"):
