@@ -90,7 +90,7 @@ def load_library():
         covers = [
             (
                 track.cover_path,
-                f"{track.title} | {track.style} | {track.mood}"
+                track.title
             )
             for track in tracks
             if track.cover_path
