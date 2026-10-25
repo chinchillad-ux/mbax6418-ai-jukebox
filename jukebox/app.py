@@ -602,17 +602,23 @@ def build_app():
             )
 
         
-            cover_preview = gr.Image(
-                label="🎨 Your Album Cover",
-                type="filepath",
-                interactive=False,
-                height=350
-            )
+            
+            with gr.Row():
+                with gr.Column(scale=2):
+                    cover_preview = gr.Image(
+                        label="🎨 Your Album Cover",
+                        type="filepath",
+                        interactive=False,
+                        height=300,
+                        width=300
+                    )
 
-            song_preview = gr.Audio(
-                label="🎧 Your Generated Song",
-                interactive=False
-            )
+                with gr.Column(scale=3):
+                    song_preview = gr.Audio(
+                        label="🎧 Your Generated Song",
+                        interactive=False
+                    )
+
 
             generate_btn.click(
                 fn=create_song,
