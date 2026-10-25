@@ -565,6 +565,10 @@ def build_app():
                 "✨ Generate My Song",
                 variant="primary"
             )
+                        retry_btn = gr.Button(
+                "🔄 Retry Song Generation",
+                variant="secondary"
+            )
 
             generation_status = gr.Markdown(
                 "Your song will appear here once generated."
@@ -584,6 +588,12 @@ def build_app():
             )
 
             generate_btn.click(
+                fn=create_song,
+                inputs=[style, mood, duration, vocal_mode],
+                outputs=[song_preview, cover_preview, generation_status],
+                show_progress="full"
+            )
+                        retry_btn.click(
                 fn=create_song,
                 inputs=[style, mood, duration, vocal_mode],
                 outputs=[song_preview, cover_preview, generation_status],
