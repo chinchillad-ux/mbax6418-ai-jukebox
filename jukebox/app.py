@@ -1,6 +1,9 @@
 
 import gradio as gr
 
+import json
+from jukebox.models import Track
+
 import ipaddress
 import socket
 from pathlib import Path
@@ -271,6 +274,27 @@ def generate_dj_intro(track_id, voice_choice, voice_file, voice_url):
 
 
 
+def import_demo_tracks():
+    """Add the three bundled demo songs to the library."""
+    try:
+        sample_file = (
+            Path(__file__).resolve().parent.parent
+            / "assets" / "samples" / "samples.json"
+        )
+
+        with sample_file.open(encoding="utf-8") as file:
+            samples = json.load(file)
+
+        library = Library()
+
+        for sample in samples:
+            library.add(Track.from_dict(sample))
+
+        return load_library()
+
+    except (OSError, ValueError, TypeError, LibraryError):
+        return [], "⚠️ Could not load the demo songs."
+
 
 def build_app():
     """Build the AI Jukebox interface."""
@@ -384,6 +408,7 @@ def build_app():
             )
 
             refresh_btn = gr.Button("🔄 Refresh Library")
+            demo_btn = gr.Button("🎵 Load 3 Demo Songs")
 
             library_status = gr.Markdown()
 
@@ -400,7 +425,13 @@ def build_app():
                 
             
 
-            
+          
+            demo_btn.click(
+                fn=import_demo_tracks,
+                inputs=[],
+                outputs=[library_gallery, library_status]
+            )
+  
 
             refresh_btn.click(
                 fn=load_library,
