@@ -131,3 +131,46 @@ def test_dj_playlist_advances_in_correct_order(tmp_path, monkeypatch):
     assert audio is None
     assert state["phase"] is None
     assert "complete" in message.lower()
+
+
+
+def test_dj_intro_uses_mocked_services(tmp_path, monkeypatch):
+    """Generate and save DJ speech without calling AI endpoints."""
+    monkeypatch.chdir(tmp_path)
+
+    library = Library()
+    library.add(
+        Track(
+            id="dj-test",
+            title="Happy Pop",
+            style="pop",
+            mood="happy",
+            duration_seconds=30,
+            is_vocal=False,
+            audio_path="song.mp3"
+        )
+    )
+
+    def fake_commentary(track):
+        return f"Coming up next: {track.title}!"
+
+    def fake_speak(text, voice_ref_path=None):
+        assert text == "Coming up next: Happy Pop!"
+        assert voice_ref_path is None
+        return "dj-intro.mp3"
+
+    monkeypatch.setattr(
+        app, "commentary_for_track", fake_commentary
+    )
+    monkeypatch.setattr(app, "speak", fake_speak)
+
+    audio, message = app.generate_dj_intro(
+        "dj-test", "Default Voice", None, ""
+    )
+
+    assert audio == "dj-intro.mp3"
+    assert "ready" in message.lower()
+
+    saved = Library().get("dj-test")
+    assert saved.dj_audio_path == "dj-intro.mp3"
+
