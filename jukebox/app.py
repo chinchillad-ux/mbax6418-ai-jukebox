@@ -552,59 +552,64 @@ def build_app():
                 "and let AI bring your song to life."
             )
 
-            with gr.Row():
-                style = gr.Dropdown(
-                    choices=[
-                        "Pop", "Rock", "Country", "Hip-Hop",
-                        "Electronic", "Indie", "Jazz",
-                        "R&B", "Synthwave"
-                    ],
-                    value="Pop",
-                    label="Musical Style"
-                )
-
-                mood = gr.Dropdown(
-                    choices=[
-                        "Happy", "Energetic", "Relaxed",
-                        "Romantic", "Sad", "Dreamy",
-                        "Hopeful", "Mysterious"
-                    ],
-                    value="Happy",
-                    label="Mood"
-                )
-
-            duration = gr.Slider(
-                minimum=30,
-                maximum=180,
-                value=60,
-                step=15,
-                label="Song Duration (seconds)"
-            )
-
-            vocal_mode = gr.Radio(
-                choices=["Vocals", "Instrumental"],
-                value="Vocals",
-                label="Song Type"
-            )
-
-            generate_btn = gr.Button(
-                "✨ Generate My Song",
-                variant="primary"
-            )
-            
-            retry_btn = gr.Button(
-                "🔄 Retry Song Generation",
-                variant="secondary"
-            )
-
-            generation_status = gr.Markdown(
-                "Your song will appear here once generated."
-            )
-
-        
             
             with gr.Row():
+                # LEFT: Song creation settings
                 with gr.Column(scale=2):
+                    gr.Markdown("### 🎛️ Create Your Song")
+
+                    style = gr.Dropdown(
+                        choices=[
+                            "Pop", "Rock", "Country", "Hip-Hop",
+                            "Electronic", "Indie", "Jazz",
+                            "R&B", "Synthwave"
+                        ],
+                        value="Pop",
+                        label="Musical Style"
+                    )
+
+                    mood = gr.Dropdown(
+                        choices=[
+                            "Happy", "Energetic", "Relaxed",
+                            "Romantic", "Sad", "Dreamy",
+                            "Hopeful", "Mysterious"
+                        ],
+                        value="Happy",
+                        label="Mood"
+                    )
+
+                    duration = gr.Slider(
+                        minimum=30,
+                        maximum=180,
+                        value=60,
+                        step=15,
+                        label="Song Duration (seconds)"
+                    )
+
+                    vocal_mode = gr.Radio(
+                        choices=["Vocals", "Instrumental"],
+                        value="Vocals",
+                        label="Song Type"
+                    )
+
+                    generate_btn = gr.Button(
+                        "✨ Generate My Song",
+                        variant="primary"
+                    )
+
+                    retry_btn = gr.Button(
+                        "🔄 Retry Song Generation",
+                        variant="secondary"
+                    )
+
+                # RIGHT: Generated music and artwork
+                with gr.Column(scale=3):
+                    gr.Markdown("### 🎧 Your Music")
+
+                    generation_status = gr.Markdown(
+                        "Your song will appear here once generated."
+                    )
+
                     cover_preview = gr.Image(
                         label="🎨 Your Album Cover",
                         type="filepath",
@@ -613,11 +618,11 @@ def build_app():
                         width=300
                     )
 
-                with gr.Column(scale=3):
                     song_preview = gr.Audio(
                         label="🎧 Your Generated Song",
                         interactive=False
                     )
+
 
 
             generate_btn.click(
