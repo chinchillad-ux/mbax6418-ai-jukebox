@@ -209,15 +209,19 @@ def download_voice_url(url):
     return str(destination)
 
 
+
 def generate_dj_intro(track_id, voice_choice, voice_file, voice_url):
     """Generate song-specific DJ commentary and speech."""
     if not track_id:
         return None, "⚠️ Please select a song first."
 
-        if voice_choice == "Custom Voice" and not (
+    if voice_choice == "Custom Voice" and not (
         voice_file or (voice_url and voice_url.strip())
     ):
         return None, "⚠️ Please upload a voice file or enter an audio URL."
+
+    try:
+
 
     try:
         library = Library()
