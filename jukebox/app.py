@@ -66,6 +66,27 @@ def create_song(style, mood, duration, vocal_mode):
 
 
 
+def load_library():
+    """Load saved songs and their album covers."""
+    try:
+        tracks = Library().list()
+
+        covers = [
+            (
+                track.cover_path,
+                f"{track.title} | {track.style} | {track.mood}"
+            )
+            for track in tracks
+            if track.cover_path
+        ]
+
+        return covers, f"💿 You have {len(tracks)} saved song(s)."
+
+    except LibraryError as error:
+        return [], f"⚠️ Could not load library: {error}"
+
+
+
 
 
 
@@ -160,8 +181,36 @@ def build_app():
 
 
 
-        with gr.Tab("💿 My Library"):
-            gr.Markdown("Your songs and album artwork will appear here.")
+        
+        with gr.Tab("💿 My Library") as library_tab:
+            gr.Markdown("## Your Music Collection")
+            gr.Markdown(
+                "All your AI-generated songs in one place."
+            )
+
+            refresh_btn = gr.Button("🔄 Refresh Library")
+
+            library_status = gr.Markdown()
+
+            library_gallery = gr.Gallery(
+                label="Your Album Collection",
+                columns=3,
+                height=350,
+                object_fit="contain"
+            )
+
+            refresh_btn.click(
+                fn=load_library,
+                inputs=[],
+                outputs=[library_gallery, library_status]
+            )
+
+            library_tab.select(
+                fn=load_library,
+                inputs=[],
+                outputs=[library_gallery, library_status]
+            )
+
 
         with gr.Tab("🎙️ AI DJ"):
             gr.Markdown("Customize your DJ and play your collection.")
