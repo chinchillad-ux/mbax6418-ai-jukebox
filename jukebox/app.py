@@ -198,7 +198,7 @@ def build_app():
                 columns=4,
                 height=320,
                 object_fit="contain",
-                fit_columns=False
+                
             )
 
             
