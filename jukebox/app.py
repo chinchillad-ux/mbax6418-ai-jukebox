@@ -192,12 +192,16 @@ def build_app():
 
             library_status = gr.Markdown()
 
+            
             library_gallery = gr.Gallery(
                 label="Your Album Collection",
-                columns=3,
-                height=350,
-                object_fit="contain"
+                columns=4,
+                height=320,
+                object_fit="contain",
+                fit_columns=False
             )
+
+            
 
             refresh_btn.click(
                 fn=load_library,
