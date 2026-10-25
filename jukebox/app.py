@@ -88,6 +88,34 @@ def load_library():
 
 
 
+def select_library_song(evt: gr.SelectData):
+    """Load the audio for the selected album cover."""
+    try:
+        tracks = [
+            track for track in Library().list()
+            if track.cover_path
+        ]
+
+        index = evt.index
+
+        if not isinstance(index, int) or not 0 <= index < len(tracks):
+            return None, "Please select an album cover."
+
+        track = tracks[index]
+
+        if not track.audio_path:
+            return None, "⚠️ This song has no audio file."
+
+        return (
+            track.audio_path,
+            f"🎵 Now selected: {track.title}"
+        )
+
+    except (LibraryError, OSError):
+        return None, "⚠️ Could not load the selected song."
+
+
+
 
 
 def build_app():
@@ -230,6 +258,23 @@ def build_app():
                 fn=load_library,
                 inputs=[],
                 outputs=[library_gallery, library_status]
+            )
+
+            gr.Markdown("### 🎧 Listen to Your Music")
+
+            selected_song_status = gr.Markdown(
+                "Click an album cover above to select a song."
+            )
+
+            library_audio = gr.Audio(
+                label="Selected Song",
+                interactive=False
+            )
+
+            library_gallery.select(
+                fn=select_library_song,
+                inputs=[],
+                outputs=[library_audio, selected_song_status]
             )
 
 
