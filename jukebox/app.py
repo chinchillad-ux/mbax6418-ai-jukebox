@@ -368,6 +368,55 @@ def start_dj_set(track_ids):
         return None, empty_state, f"⚠️ {error}"
 
 
+def advance_dj_set(state):
+    """Play the next DJ intro or song when audio finishes."""
+    empty_state = {"ids": [], "index": 0, "phase": None}
+
+    if not state or not state.get("ids"):
+        return None, empty_state, "Your DJ set has ended."
+
+    ids = state["ids"]
+    index = state["index"]
+    phase = state["phase"]
+
+    if phase == "speech":
+        next_phase = "song"
+    elif phase == "song":
+        index += 1
+        next_phase = "speech"
+    else:
+        return None, empty_state, "Your DJ set has ended."
+
+    if index >= len(ids):
+        return None, empty_state, "🎉 Your DJ set is complete!"
+
+    try:
+        track = Library().get(ids[index])
+
+        if track is None:
+            return None, empty_state, "⚠️ Song not found."
+
+        if next_phase == "speech":
+            audio_path = track.dj_audio_path
+            message = f"🎙️ Now introducing: {track.title}"
+        else:
+            audio_path = track.audio_path
+            message = f"🎵 Now playing: {track.title}"
+
+        if not audio_path or not Path(audio_path).is_file():
+            return None, empty_state, "⚠️ Audio file is missing."
+
+        new_state = {
+            "ids": ids,
+            "index": index,
+            "phase": next_phase
+        }
+
+        return audio_path, new_state, message
+
+    except LibraryError as error:
+        return None, empty_state, f"⚠️ {error}"
+
 
 
 def build_app():
@@ -636,6 +685,18 @@ def build_app():
                     playback_status
                 ]
             )
+            
+            playlist_audio.stop(
+                fn=advance_dj_set,
+                inputs=[playlist_state],
+                outputs=[
+                    playlist_audio,
+                    playlist_state,
+                    playback_status
+                ],
+                show_progress="hidden"
+            )
+
 
 
 
