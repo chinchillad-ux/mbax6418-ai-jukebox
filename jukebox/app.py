@@ -565,7 +565,8 @@ def build_app():
                 "✨ Generate My Song",
                 variant="primary"
             )
-                        retry_btn = gr.Button(
+            
+            retry_btn = gr.Button(
                 "🔄 Retry Song Generation",
                 variant="secondary"
             )
