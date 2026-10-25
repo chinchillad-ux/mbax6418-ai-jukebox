@@ -1,6 +1,17 @@
 
 import gradio as gr
 
+import ipaddress
+import socket
+from pathlib import Path
+from urllib.parse import urlsplit
+from urllib.request import (
+    Request, build_opener, HTTPRedirectHandler, ProxyHandler
+)
+from urllib.error import URLError
+from uuid import uuid4
+
+
 from jukebox.music import generate_song, SongGenerationError
 
 from jukebox.cover import generate_cover, CoverGenerationError
@@ -116,6 +127,86 @@ def select_library_song(evt: gr.SelectData):
     except (LibraryError, OSError):
         return None, "⚠️ Could not load the selected song."
 
+
+def download_voice_url(url):
+    """Download a public HTTPS MP3/WAV voice sample."""
+
+    parts = urlsplit(url.strip())
+
+    if (
+        parts.scheme != "https"
+        or not parts.hostname
+        or parts.username
+        or parts.password
+    ):
+        raise DJError("Please enter a public HTTPS audio URL.")
+
+    try:
+        if parts.port not in (None, 443):
+            raise DJError("The URL must use standard HTTPS.")
+
+        addresses = socket.getaddrinfo(
+            parts.hostname, 443, type=socket.SOCK_STREAM
+        )
+
+        if not addresses or any(
+            not ipaddress.ip_address(item[4][0]).is_global
+            for item in addresses
+        ):
+            raise DJError("The URL must point to a public website.")
+
+    except (OSError, ValueError):
+        raise DJError("Could not validate the audio URL.") from None
+
+    suffix = Path(parts.path).suffix.lower()
+
+    if suffix not in (".mp3", ".wav"):
+        raise DJError("The URL must end in .mp3 or .wav.")
+
+    class NoRedirects(HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+
+    opener = build_opener(ProxyHandler({}), NoRedirects())
+
+    try:
+        request = Request(
+            url,
+            headers={"User-Agent": "AI-Jukebox/1.0"}
+        )
+
+        with opener.open(request, timeout=15) as response:
+            audio = response.read(10 * 1024 * 1024 + 1)
+
+    except (URLError, OSError):
+        raise DJError(
+            "Could not download audio. Use a direct public file URL."
+        ) from None
+
+    if not audio or len(audio) > 10 * 1024 * 1024:
+        raise DJError("Audio must be between 1 byte and 10 MB.")
+
+    valid_wav = (
+        len(audio) >= 12
+        and audio[:4] == b"RIFF"
+        and audio[8:12] == b"WAVE"
+    )
+    valid_mp3 = audio.startswith(b"ID3") or (
+        len(audio) >= 2
+        and audio[0] == 0xFF
+        and (audio[1] & 0xE0) == 0xE0
+    )
+
+    if not (valid_wav or valid_mp3):
+        raise DJError("The URL did not return valid MP3/WAV audio.")
+
+    folder = Path("data/voice-refs")
+    folder.mkdir(parents=True, exist_ok=True)
+
+    destination = folder / f"{uuid4().hex}{suffix}"
+    destination.write_bytes(audio)
+
+    return str(destination)
 
 
 def generate_dj_intro(track_id, voice_choice, voice_file):
