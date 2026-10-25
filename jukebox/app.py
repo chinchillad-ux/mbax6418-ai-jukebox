@@ -510,6 +510,24 @@ def build_app():
         }
 
         
+        #library-gallery .caption-label {
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box;
+            padding: 8px 10px !important;
+            border-radius: 0 0 10px 10px;
+            background: rgba(15, 23, 42, 0.9) !important;
+            color: #ffffff !important;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         #jukebox-hero {
             background: linear-gradient(
                 115deg,
