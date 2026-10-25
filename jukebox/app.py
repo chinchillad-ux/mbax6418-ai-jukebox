@@ -419,6 +419,47 @@ def advance_dj_set(state):
 
 
 
+
+def skip_dj_track(state):
+    """Skip the current track and introduce the next one."""
+    empty_state = {"ids": [], "index": 0, "phase": None}
+
+    if not state or not state.get("ids"):
+        return None, empty_state, "No active DJ set."
+
+    ids = state["ids"]
+    next_index = state["index"] + 1
+
+    if next_index >= len(ids):
+        return None, empty_state, "🎉 Your DJ set is complete!"
+
+    try:
+        track = Library().get(ids[next_index])
+
+        if (
+            track is None
+            or not track.dj_audio_path
+            or not Path(track.dj_audio_path).is_file()
+        ):
+            return None, empty_state, "⚠️ Next DJ introduction is missing."
+
+        new_state = {
+            "ids": ids,
+            "index": next_index,
+            "phase": "speech"
+        }
+
+        return (
+            track.dj_audio_path,
+            new_state,
+            f"⏭️ Skipped to: {track.title}"
+        )
+
+    except LibraryError as error:
+        return None, empty_state, f"⚠️ {error}"
+
+
+
 def build_app():
     """Build the AI Jukebox interface."""
 
@@ -685,6 +726,21 @@ def build_app():
                     playback_status
                 ]
             )
+            
+            skip_playlist_btn = gr.Button(
+                "⏭️ Skip Song"
+            )
+
+            skip_playlist_btn.click(
+                fn=skip_dj_track,
+                inputs=[playlist_state],
+                outputs=[
+                    playlist_audio,
+                    playlist_state,
+                    playback_status
+                ]
+            )
+
             
             playlist_audio.stop(
                 fn=advance_dj_set,
