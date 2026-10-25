@@ -110,7 +110,7 @@ def build_app():
             gap: 16px !important;
         }
         """
-    ) as demo:
+
 
     ) as demo:
 
