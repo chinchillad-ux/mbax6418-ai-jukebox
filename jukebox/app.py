@@ -657,8 +657,18 @@ def build_app():
                 "All your AI-generated songs in one place."
             )
 
-            refresh_btn = gr.Button("🔄 Refresh Library")
-            demo_btn = gr.Button("🎵 Load 3 Demo Songs")
+            
+            with gr.Row():
+                refresh_btn = gr.Button(
+                    "🔄 Refresh Library",
+                    variant="primary"
+                )
+
+                demo_btn = gr.Button(
+                    "🎵 Load 3 Demo Songs",
+                    variant="secondary"
+                )
+
 
             library_status = gr.Markdown()
 
