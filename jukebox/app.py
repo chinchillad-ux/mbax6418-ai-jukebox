@@ -506,6 +506,24 @@ def build_app():
                 "🎤 Generate DJ Introduction",
                 variant="primary"
             )
+            
+            gr.Markdown("## 🎶 Build Your DJ Playlist")
+            gr.Markdown(
+                "Select the songs you want your AI DJ to play. "
+                "Only songs with completed DJ introductions appear here."
+            )
+
+            playlist_selector = gr.Dropdown(
+                choices=[
+                    (f"{track.title} — {track.style}", track.id)
+                    for track in Library().list()
+                    if track.audio_path and track.dj_audio_path
+                ],
+                multiselect=True,
+                label="Choose Your Playlist Songs",
+                info="Select multiple songs for your DJ set."
+            )
+
 
             dj_status = gr.Markdown(
                 "Select a song to create its DJ introduction."
