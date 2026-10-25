@@ -102,6 +102,13 @@ def build_app():
             )
 
         
+            cover_preview = gr.Image(
+                label="🎨 Your Album Cover",
+                type="filepath",
+                interactive=False,
+                height=350
+            )
+
             song_preview = gr.Audio(
                 label="🎧 Your Generated Song",
                 interactive=False
