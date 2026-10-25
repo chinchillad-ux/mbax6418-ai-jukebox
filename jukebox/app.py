@@ -495,8 +495,9 @@ def build_app():
     with gr.Blocks(
         title="AI Jukebox",
         theme=gr.themes.Soft(
-            primary_hue="violet",
-            neutral_hue="slate"
+    primary_hue="teal",
+    neutral_hue="slate"
+
         ),
         css="""
         #library-gallery .grid-container {
