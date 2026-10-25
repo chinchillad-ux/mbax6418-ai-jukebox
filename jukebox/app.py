@@ -528,6 +528,15 @@ def build_app():
         #jukebox-hero strong {
             color: #FFFFFF !important;
         }
+        
+        #studio-controls,
+        #studio-output {
+            background: var(--block-background-fill);
+            border: 1px solid var(--block-border-color);
+            border-radius: 18px;
+            padding: 20px;
+        }
+
 
         """
 
@@ -555,7 +564,7 @@ def build_app():
             
             with gr.Row():
                 # LEFT: Song creation settings
-                with gr.Column(scale=2):
+                with gr.Column(scale=2, elem_id="studio-controls"):
                     gr.Markdown("### 🎛️ Create Your Song")
 
                     style = gr.Dropdown(
@@ -603,7 +612,7 @@ def build_app():
                     )
 
                 # RIGHT: Generated music and artwork
-                with gr.Column(scale=3):
+                with gr.Column(scale=3, elem_id="studio-output"):
                     gr.Markdown("### 🎧 Your Music")
 
                     generation_status = gr.Markdown(
