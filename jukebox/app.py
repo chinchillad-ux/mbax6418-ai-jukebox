@@ -594,7 +594,8 @@ def build_app():
                 outputs=[song_preview, cover_preview, generation_status],
                 show_progress="full"
             )
-                        retry_btn.click(
+            
+            retry_btn.click(
                 fn=create_song,
                 inputs=[style, mood, duration, vocal_mode],
                 outputs=[song_preview, cover_preview, generation_status],
