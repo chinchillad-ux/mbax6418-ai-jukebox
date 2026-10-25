@@ -3,9 +3,11 @@ import gradio as gr
 
 from jukebox.music import generate_song, SongGenerationError
 
+from jukebox.cover import generate_cover, CoverGenerationError
+
 
 def create_song(style, mood, duration, vocal_mode):
-    """Generate a song using the existing music service."""
+    """Generate a song and matching album cover."""
     try:
         track = generate_song(
             style=style.lower(),
@@ -14,19 +16,39 @@ def create_song(style, mood, duration, vocal_mode):
             is_vocal=(vocal_mode == "Vocals")
         )
 
-        return (
-            track.audio_path,
-            f"✅ Your song '{track.title}' is ready!"
-        )
-
     except SongGenerationError as error:
-        return None, f"⚠️ {error} Please try again."
+        return None, None, f"⚠️ {error} Please try again."
 
     except Exception:
-        return None, (
-            "⚠️ Song generation couldn't start. "
-            "Check your local configuration and try again."
+        return None, None, (
+            "⚠️ Song generation failed. Please try again."
         )
+
+    try:
+        track = generate_cover(track)
+
+    except CoverGenerationError as error:
+        return (
+            track.audio_path,
+            None,
+            f"⚠️ Your song is ready, but the cover failed: {error}"
+        )
+
+    except Exception:
+        return (
+            track.audio_path,
+            None,
+            "⚠️ Your song is ready, but cover art failed."
+        )
+
+    return (
+        track.audio_path,
+        track.cover_path,
+        f"✅ Your song '{track.title}' and cover are ready!"
+    )
+
+
+
 
 
 
@@ -117,7 +139,7 @@ def build_app():
             generate_btn.click(
                 fn=create_song,
                 inputs=[style, mood, duration, vocal_mode],
-                outputs=[song_preview, generation_status],
+                outputs=[song_preview, cover_preview, generation_status],
                 show_progress="full"
             )
 
