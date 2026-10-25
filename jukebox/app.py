@@ -323,6 +323,53 @@ def preview_playlist(track_ids):
     return "\n\n".join(lines)
 
 
+
+def start_dj_set(track_ids):
+    """Start the playlist with the first DJ introduction."""
+    empty_state = {"ids": [], "index": 0, "phase": None}
+
+    if not track_ids:
+        return None, empty_state, "⚠️ Select at least one song."
+
+    try:
+        library = Library()
+
+        for track_id in track_ids:
+            track = library.get(track_id)
+
+            if not track or not track.audio_path or not track.dj_audio_path:
+                return (
+                    None,
+                    empty_state,
+                    "⚠️ A selected song needs a DJ introduction."
+                )
+
+            if not (
+                Path(track.audio_path).is_file()
+                and Path(track.dj_audio_path).is_file()
+            ):
+                return None, empty_state, "⚠️ A playlist audio file is missing."
+
+        first_track = library.get(track_ids[0])
+
+        state = {
+            "ids": list(track_ids),
+            "index": 0,
+            "phase": "speech"
+        }
+
+        return (
+            first_track.dj_audio_path,
+            state,
+            f"🎙️ Now introducing: {first_track.title}"
+        )
+
+    except LibraryError as error:
+        return None, empty_state, f"⚠️ {error}"
+
+
+
+
 def build_app():
     """Build the AI Jukebox interface."""
 
@@ -560,6 +607,36 @@ def build_app():
                 inputs=[playlist_selector],
                 outputs=[playlist_preview]
             )
+            
+            playlist_state = gr.State(
+                {"ids": [], "index": 0, "phase": None}
+            )
+
+            start_playlist_btn = gr.Button(
+                "▶️ Start DJ Set",
+                variant="primary"
+            )
+
+            playback_status = gr.Markdown(
+                "Your DJ set is ready when you are."
+            )
+
+            playlist_audio = gr.Audio(
+                label="🎶 DJ Playlist Player",
+                interactive=False,
+                autoplay=True
+            )
+
+            start_playlist_btn.click(
+                fn=start_dj_set,
+                inputs=[playlist_selector],
+                outputs=[
+                    playlist_audio,
+                    playlist_state,
+                    playback_status
+                ]
+            )
+
 
 
             dj_status = gr.Markdown(
