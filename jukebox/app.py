@@ -354,6 +354,13 @@ def build_app():
                 file_types=[".mp3", ".wav"],
                 type="filepath"
             )
+            
+            dj_voice_url = gr.Textbox(
+                label="🔗 Load Voice from URL",
+                placeholder="https://example.com/voice.wav",
+                info="Paste a direct HTTPS link to an MP3 or WAV recording."
+            )
+
 
             gr.Markdown(
                 "Only upload a voice recording you own "
