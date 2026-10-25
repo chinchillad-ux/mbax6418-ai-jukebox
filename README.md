@@ -28,3 +28,8 @@ spoken DJ commentary between tracks — all using the MBAX 6418 class services.
 ```bash
 pytest
 ```
+
+Issue #5's library and playback-controller API, automated test results,
+and remaining integration work are documented in [results/queue.md](results/queue.md).
+The controller requires the UI audio adapter in issue #6 for audible playback.
+Generated samples and their verification evidence are documented in [results/samples.md](results/samples.md).

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "sample-copper-sunrise",
+    "title": "Copper Sunrise",
+    "style": "indie pop",
+    "mood": "hopeful",
+    "duration_seconds": 30,
+    "is_vocal": true,
+    "lyrics": "**Verse:**\nSunlight dances on the walls,\nWe're writing stories we recall.\nThe gray is gone, the sky turns blue,\nI see the world in shades of you.\n\n**Chorus:**\nOh, we're catching fire, soft and slow,\nWatching all the shadows go.\nHeartbeat loud, hands held high,\nThere's a whole new sky.",
+    "audio_path": "assets/samples/copper-sunrise.mp3",
+    "cover_path": "assets/samples/copper-sunrise.png",
+    "dj_commentary": "Get ready to catch the glow with \"Copper Sunrise,\" a sparkling indie pop track that radiates pure hope as the day breaks wide open. It captures that magic moment when the gray fades from the walls and your spirit lifts toward a brand-new horizon. Turn it up and let the warmth carry you forward!",
+    "dj_audio_path": "assets/samples/copper-sunrise-dj.mp3"
+  },
+  {
+    "id": "sample-rain-on-glass",
+    "title": "Rain on Glass",
+    "style": "ambient electronic",
+    "mood": "calm",
+    "duration_seconds": 30,
+    "is_vocal": false,
+    "lyrics": null,
+    "audio_path": "assets/samples/rain-on-glass.mp3",
+    "cover_path": "assets/samples/rain-on-glass.png",
+    "dj_commentary": "Let's drop the tempo and dive into the serene atmosphere of \"Rain on Glass,\" where lush synth textures and subtle rhythms create a completely immersive escape. This is ambient electronic at its best, wrapping you in a calm, weightless vibe that lets you just breathe and relax. It's a stunning instrumental piece with zero vocals, offering the perfect sonic reset to clear your head.",
+    "dj_audio_path": "assets/samples/rain-on-glass-dj.mp3"
+  },
+  {
+    "id": "sample-neon-night-drive",
+    "title": "Neon Night Drive",
+    "style": "synthwave",
+    "mood": "energetic",
+    "duration_seconds": 30,
+    "is_vocal": false,
+    "lyrics": null,
+    "audio_path": "assets/samples/neon-night-drive.mp3",
+    "cover_path": "assets/samples/neon-night-drive.png",
+    "dj_commentary": "We’re shifting into gear for \"Neon Night Drive,\" an energetic synthwave cut that runs entirely on pulsing synths and relentless rhythms. With zero vocals on the track, you’ll get to dive straight into the rolling basslines and shimmering leads that paint the whole scene. Keep your volume up and your attention locked in, because this instrumental groove is built to keep the momentum going nonstop.",
+    "dj_audio_path": "assets/samples/neon-night-drive-dj.mp3"
+  }
+]
