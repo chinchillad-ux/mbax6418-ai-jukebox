@@ -296,6 +296,33 @@ def import_demo_tracks():
         return [], "⚠️ Could not load the demo songs."
 
 
+
+def preview_playlist(track_ids):
+    """Show the selected songs in playlist order."""
+    if not track_ids:
+        return "Your playlist is empty. Select songs above."
+
+    tracks = {
+        track.id: track
+        for track in Library().list()
+    }
+
+    lines = ["### 🎧 Your DJ Set"]
+
+    for number, track_id in enumerate(track_ids, start=1):
+        track = tracks.get(track_id)
+
+        if track is None:
+            return "⚠️ A selected song was not found."
+
+        lines.append(
+            f"{number}. **{track.title}** — {track.style} "
+            f"| 🎙️ DJ Intro → 🎵 Song"
+        )
+
+    return "\n\n".join(lines)
+
+
 def build_app():
     """Build the AI Jukebox interface."""
 
@@ -522,6 +549,16 @@ def build_app():
                 multiselect=True,
                 label="Choose Your Playlist Songs",
                 info="Select multiple songs for your DJ set."
+            )
+
+            playlist_preview = gr.Markdown(
+                "Your playlist is empty. Select songs above."
+            )
+
+            playlist_selector.change(
+                fn=preview_playlist,
+                inputs=[playlist_selector],
+                outputs=[playlist_preview]
             )
 
 
