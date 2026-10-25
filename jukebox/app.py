@@ -667,7 +667,7 @@ def build_app():
             library_gallery = gr.Gallery(
                 label="Your Album Collection",
                 columns=4,
-                height=320,
+                height=240,
                 object_fit="cover",
                 elem_id="library-gallery"
             )
