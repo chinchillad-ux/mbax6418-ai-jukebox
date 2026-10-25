@@ -1,6 +1,36 @@
 
 import gradio as gr
 
+from jukebox.music import generate_song, SongGenerationError
+
+
+def create_song(style, mood, duration, vocal_mode):
+    """Generate a song using the existing music service."""
+    try:
+        track = generate_song(
+            style=style.lower(),
+            mood=mood.lower(),
+            duration_seconds=int(duration),
+            is_vocal=(vocal_mode == "Vocals")
+        )
+
+        return (
+            track.audio_path,
+            f"✅ Your song '{track.title}' is ready!"
+        )
+
+    except SongGenerationError as error:
+        return None, f"⚠️ {error} Please try again."
+
+    except Exception:
+        return None, (
+            "⚠️ Song generation couldn't start. "
+            "Check your local configuration and try again."
+        )
+
+
+
+
 
 def build_app():
     """Build the AI Jukebox interface."""
@@ -70,6 +100,20 @@ def build_app():
             generation_status = gr.Markdown(
                 "Your song will appear here once generated."
             )
+
+        
+            song_preview = gr.Audio(
+                label="🎧 Your Generated Song",
+                interactive=False
+            )
+
+            generate_btn.click(
+                fn=create_song,
+                inputs=[style, mood, duration, vocal_mode],
+                outputs=[song_preview, generation_status],
+                show_progress="full"
+            )
+
 
 
         with gr.Tab("💿 My Library"):
