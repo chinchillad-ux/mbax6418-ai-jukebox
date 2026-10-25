@@ -209,13 +209,15 @@ def download_voice_url(url):
     return str(destination)
 
 
-def generate_dj_intro(track_id, voice_choice, voice_file):
+def generate_dj_intro(track_id, voice_choice, voice_file, voice_url):
     """Generate song-specific DJ commentary and speech."""
     if not track_id:
         return None, "⚠️ Please select a song first."
 
-    if voice_choice == "Custom Voice" and not voice_file:
-        return None, "⚠️ Please upload an MP3 or WAV voice sample."
+        if voice_choice == "Custom Voice" and not (
+        voice_file or (voice_url and voice_url.strip())
+    ):
+        return None, "⚠️ Please upload a voice file or enter an audio URL."
 
     try:
         library = Library()
@@ -224,14 +226,21 @@ def generate_dj_intro(track_id, voice_choice, voice_file):
         if track is None:
             return None, "⚠️ Song not found in your library."
 
+        
+        # Use the uploaded file first, or download from the URL.
+        voice_ref = None
+
+        if voice_choice == "Custom Voice":
+            if voice_file:
+                voice_ref = voice_file
+            else:
+                voice_ref = download_voice_url(voice_url.strip())
+
         # Qwen writes commentary specific to the selected song.
         commentary = commentary_for_track(track)
 
-        # Chatterbox converts the commentary into speech.
-        voice_ref = (
-            voice_file if voice_choice == "Custom Voice"
-            else None
-        )
+
+      
 
         audio_path = speak(
             commentary,
@@ -477,7 +486,8 @@ def build_app():
                 inputs=[
                     dj_song,
                     dj_voice,
-                    dj_voice_reference
+                    dj_voice_reference,
+                    dj_voice_url
                 ],
                 outputs=[dj_audio, dj_status],
                 show_progress="full"
