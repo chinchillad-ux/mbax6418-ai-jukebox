@@ -278,8 +278,52 @@ def build_app():
             )
 
 
+        
         with gr.Tab("🎙️ AI DJ"):
-            gr.Markdown("Customize your DJ and play your collection.")
+            gr.Markdown("## 🎙️ Meet Your AI DJ")
+            gr.Markdown(
+                "Choose a song and let your AI DJ introduce it!"
+            )
+
+            dj_song = gr.Dropdown(
+                choices=[
+                    (track.title, track.id)
+                    for track in Library().list()
+                ],
+                label="Choose a Song"
+            )
+
+            dj_voice = gr.Radio(
+                choices=["Default Voice", "Custom Voice"],
+                value="Default Voice",
+                label="DJ Voice"
+            )
+
+            dj_voice_reference = gr.File(
+                label="Upload Your Voice (Optional)",
+                file_types=[".mp3", ".wav"],
+                type="filepath"
+            )
+
+            gr.Markdown(
+                "Only upload a voice recording you own "
+                "or have permission to use."
+            )
+
+            dj_generate_btn = gr.Button(
+                "🎤 Generate DJ Introduction",
+                variant="primary"
+            )
+
+            dj_status = gr.Markdown(
+                "Select a song to create its DJ introduction."
+            )
+
+            dj_audio = gr.Audio(
+                label="🎧 Your DJ Introduction",
+                interactive=False
+            )
+
 
     return demo
 
