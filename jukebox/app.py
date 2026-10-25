@@ -93,12 +93,25 @@ def load_library():
 def build_app():
     """Build the AI Jukebox interface."""
 
+    
     with gr.Blocks(
         title="AI Jukebox",
         theme=gr.themes.Soft(
             primary_hue="violet",
             neutral_hue="slate"
-        )
+        ),
+        css="""
+        #library-gallery .grid-container {
+            grid-template-columns: repeat(
+                auto-fill, 200px
+            ) !important;
+            grid-auto-rows: 200px !important;
+            justify-content: start !important;
+            gap: 16px !important;
+        }
+        """
+    ) as demo:
+
     ) as demo:
 
         gr.Markdown(
@@ -193,13 +206,17 @@ def build_app():
             library_status = gr.Markdown()
 
             
+            
             library_gallery = gr.Gallery(
                 label="Your Album Collection",
                 columns=4,
                 height=320,
-                object_fit="contain",
-                
+                object_fit="cover",
+                elem_id="library-gallery"
             )
+
+                
+            
 
             
 
