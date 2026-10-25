@@ -5,6 +5,8 @@ from jukebox.music import generate_song, SongGenerationError
 
 from jukebox.cover import generate_cover, CoverGenerationError
 
+from jukebox.library import Library, LibraryError
+
 
 def create_song(style, mood, duration, vocal_mode):
     """Generate a song and matching album cover."""
@@ -41,10 +43,23 @@ def create_song(style, mood, duration, vocal_mode):
             "⚠️ Your song is ready, but cover art failed."
         )
 
+    
+    try:
+        Library().add(track)
+
+    except LibraryError as error:
+        return (
+            track.audio_path,
+            track.cover_path,
+            f"⚠️ Song and cover created, but saving failed: {error}"
+        )
+
     return (
         track.audio_path,
         track.cover_path,
-        f"✅ Your song '{track.title}' and cover are ready!"
+        f"✅ '{track.title}' and its cover were saved to your library!"
+    )
+
     )
 
 
