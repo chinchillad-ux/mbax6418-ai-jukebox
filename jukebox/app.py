@@ -7,6 +7,8 @@ from jukebox.cover import generate_cover, CoverGenerationError
 
 from jukebox.library import Library, LibraryError
 
+from jukebox.dj import commentary_for_track, speak, DJError
+
 
 def create_song(style, mood, duration, vocal_mode):
     """Generate a song and matching album cover."""
@@ -113,6 +115,54 @@ def select_library_song(evt: gr.SelectData):
 
     except (LibraryError, OSError):
         return None, "⚠️ Could not load the selected song."
+
+
+
+def generate_dj_intro(track_id, voice_choice, voice_file):
+    """Generate song-specific DJ commentary and speech."""
+    if not track_id:
+        return None, "⚠️ Please select a song first."
+
+    if voice_choice == "Custom Voice" and not voice_file:
+        return None, "⚠️ Please upload an MP3 or WAV voice sample."
+
+    try:
+        library = Library()
+        track = library.get(track_id)
+
+        if track is None:
+            return None, "⚠️ Song not found in your library."
+
+        # Qwen writes commentary specific to the selected song.
+        commentary = commentary_for_track(track)
+
+        # Chatterbox converts the commentary into speech.
+        voice_ref = (
+            voice_file if voice_choice == "Custom Voice"
+            else None
+        )
+
+        audio_path = speak(
+            commentary,
+            voice_ref_path=voice_ref
+        )
+
+        # Save the DJ introduction with the correct song.
+        track.dj_audio_path = audio_path
+        library.add(track)
+
+        return (
+            audio_path,
+            f"✅ Your AI DJ introduction for '{track.title}' is ready!"
+        )
+
+    except (DJError, LibraryError) as error:
+        return None, f"⚠️ {error}"
+
+    except Exception:
+        return None, (
+            "⚠️ DJ generation failed. Please try again."
+        )
 
 
 
@@ -322,6 +372,17 @@ def build_app():
             dj_audio = gr.Audio(
                 label="🎧 Your DJ Introduction",
                 interactive=False
+            )
+
+            dj_generate_btn.click(
+                fn=generate_dj_intro,
+                inputs=[
+                    dj_song,
+                    dj_voice,
+                    dj_voice_reference
+                ],
+                outputs=[dj_audio, dj_status],
+                show_progress="full"
             )
 
 
