@@ -460,6 +460,34 @@ def skip_dj_track(state):
 
 
 
+
+def refresh_dj_songs():
+    """Refresh available songs and playable playlist tracks."""
+    try:
+        tracks = Library().list()
+
+        song_choices = [
+            (track.title, track.id)
+            for track in tracks
+        ]
+
+        playlist_choices = [
+            (f"{track.title} — {track.style}", track.id)
+            for track in tracks
+            if track.audio_path and track.dj_audio_path
+        ]
+
+        return (
+            gr.update(choices=song_choices, value=None),
+            gr.update(choices=playlist_choices, value=[])
+        )
+
+    except LibraryError:
+        raise gr.Error("Could not refresh the song library.") from None
+
+
+
+
 def build_app():
     """Build the AI Jukebox interface."""
 
@@ -687,6 +715,17 @@ def build_app():
                 label="Choose Your Playlist Songs",
                 info="Select multiple songs for your DJ set."
             )
+            
+            refresh_dj_btn = gr.Button(
+                "🔄 Refresh Available Songs"
+            )
+
+            refresh_dj_btn.click(
+                fn=refresh_dj_songs,
+                inputs=[],
+                outputs=[dj_song, playlist_selector]
+            )
+
 
             playlist_preview = gr.Markdown(
                 "Your playlist is empty. Select songs above."
