@@ -220,7 +220,7 @@ def generate_dj_intro(track_id, voice_choice, voice_file, voice_url):
     ):
         return None, "⚠️ Please upload a voice file or enter an audio URL."
 
-    try:
+
 
 
     try:
