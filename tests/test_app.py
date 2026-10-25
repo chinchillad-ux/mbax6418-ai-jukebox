@@ -73,3 +73,61 @@ def test_song_generation_failure_shows_error(tmp_path, monkeypatch):
     assert audio is None
     assert cover is None
     assert "Music service unavailable" in message
+
+
+
+def test_dj_playlist_advances_in_correct_order(tmp_path, monkeypatch):
+    """DJ introductions and songs play in the correct sequence."""
+    monkeypatch.chdir(tmp_path)
+
+    library = Library()
+
+    for number in [1, 2]:
+        song_path = f"song-{number}.mp3"
+        dj_path = f"dj-{number}.mp3"
+
+        # Create dummy audio files without calling AI services.
+        (tmp_path / song_path).write_bytes(b"test song")
+        (tmp_path / dj_path).write_bytes(b"test dj")
+
+        library.add(
+            Track(
+                id=f"track-{number}",
+                title=f"Song {number}",
+                style="pop",
+                mood="happy",
+                duration_seconds=30,
+                is_vocal=False,
+                audio_path=song_path,
+                dj_audio_path=dj_path
+            )
+        )
+
+    # Start with the first DJ introduction.
+    audio, state, message = app.start_dj_set(
+        ["track-1", "track-2"]
+    )
+
+    assert audio == "dj-1.mp3"
+    assert state["phase"] == "speech"
+
+    # Advance to Song 1.
+    audio, state, message = app.advance_dj_set(state)
+    assert audio == "song-1.mp3"
+    assert state["phase"] == "song"
+
+    # Advance to the second DJ introduction.
+    audio, state, message = app.advance_dj_set(state)
+    assert audio == "dj-2.mp3"
+    assert state["phase"] == "speech"
+
+    # Advance to Song 2.
+    audio, state, message = app.advance_dj_set(state)
+    assert audio == "song-2.mp3"
+    assert state["phase"] == "song"
+
+    # Finish the playlist.
+    audio, state, message = app.advance_dj_set(state)
+    assert audio is None
+    assert state["phase"] is None
+    assert "complete" in message.lower()
