@@ -60,7 +60,7 @@ def create_song(style, mood, duration, vocal_mode):
         f"✅ '{track.title}' and its cover were saved to your library!"
     )
 
-    )
+    
 
 
 
