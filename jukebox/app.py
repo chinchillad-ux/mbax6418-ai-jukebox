@@ -87,6 +87,42 @@ def create_song(style, mood, duration, vocal_mode):
     
 
 
+def retry_cover(track_id):
+    """Retry album art without generating a new song."""
+    try:
+        library = Library()
+        track = library.get(track_id) if track_id else None
+
+        if track is None:
+            return None, "⚠️ Song not found in your library."
+
+        if track.cover_path:
+            return (
+                track.cover_path,
+                "✅ This song already has album artwork."
+            )
+
+        track = generate_cover(track)
+
+        if not track.cover_path:
+            return None, "⚠️ Cover generation returned no artwork."
+
+        library.add(track)
+
+        return (
+            track.cover_path,
+            f"✅ Album cover for '{track.title}' saved!"
+        )
+
+    except CoverGenerationError as error:
+        return None, f"⚠️ Cover generation failed: {error}"
+
+    except LibraryError as error:
+        return None, f"⚠️ Could not save album cover: {error}"
+
+    except Exception:
+        return None, "⚠️ Could not generate album cover. Please retry."
+
 
 
 
