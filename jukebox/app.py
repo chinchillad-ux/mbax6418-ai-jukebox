@@ -1196,6 +1196,26 @@ def build_app():
 
 
 
+            # Stop other audio when Generated Song starts.
+            song_preview.play(
+                fn=lambda: (
+                    None,
+                    None,
+                    None,
+                    {"ids": [], "index": 0, "phase": None},
+                    "⏹️ DJ set stopped for song preview."
+                ),
+                inputs=[],
+                outputs=[
+                    library_audio,
+                    dj_audio,
+                    playlist_audio,
+                    playlist_state,
+                    playback_status
+                ],
+                queue=False
+            )
+
 
 
             
