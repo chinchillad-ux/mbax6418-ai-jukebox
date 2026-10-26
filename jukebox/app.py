@@ -887,22 +887,7 @@ def build_app():
             )
 
             
-            saved_song_dropdown.change(
-                fn=select_saved_song,
-                inputs=[saved_song_dropdown],
-                outputs=[library_audio, selected_song_status]
-            )
-
-            retry_cover_btn.click(
-                fn=retry_cover,
-                inputs=[saved_song_dropdown],
-                outputs=[retry_cover_path, selected_song_status]
-            ).then(
-                fn=load_library,
-                inputs=[],
-                outputs=[library_gallery, library_status]
-            )
-
+            
             library_tab.select(
                 fn=load_library,
                 inputs=[],
@@ -941,6 +926,23 @@ def build_app():
                     "**Choose a Song**",
                     elem_id="dj-song-label"
                 )
+
+                saved_song_dropdown.change(
+                fn=select_saved_song,
+                inputs=[saved_song_dropdown],
+                outputs=[library_audio, selected_song_status]
+            )
+
+            retry_cover_btn.click(
+                fn=retry_cover,
+                inputs=[saved_song_dropdown],
+                outputs=[retry_cover_path, selected_song_status]
+            ).then(
+                fn=load_library,
+                inputs=[],
+                outputs=[library_gallery, library_status]
+            )
+
 
                 dj_song = gr.Dropdown(
                     choices=[
