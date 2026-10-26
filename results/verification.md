@@ -22,6 +22,19 @@ All six player combinations passed in both directions:
 Result: No overlapping audio during these tests.
 Audio files remained loaded and playable after switching.
 
+
+## DJ Playlist Skip Tests
+
+- Skip while paused: PASS
+  Paused the current DJ playlist track, then clicked
+  Skip to Next Song. The playlist advanced as expected.
+
+- Skip near clip completion: PASS
+  Clicked Skip to Next Song near the end of the
+  currently playing clip. The playlist advanced
+  as expected.
+
+
 ## Automated Testing
 
 Command:
