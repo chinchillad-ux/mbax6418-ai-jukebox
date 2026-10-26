@@ -563,16 +563,18 @@ def build_app():
             padding: 8px 12px;
         }
         
-        #dj-song-picker {
+      
+        #dj-song-picker .secondary-wrap {
             border: 1px solid #14B8A6 !important;
             border-radius: 12px !important;
             background: rgba(20, 184, 166, 0.10) !important;
-            padding: 8px 12px;
+            overflow: hidden;
         }
 
-        #dj-song-picker:focus-within {
+        #dj-song-picker .secondary-wrap:focus-within {
             border-color: #5EEAD4 !important;
         }
+
 
 
 
