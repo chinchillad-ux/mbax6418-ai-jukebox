@@ -232,3 +232,49 @@ def test_dj_generation_preserves_newly_saved_songs(
     )
 
 
+def test_song_is_saved_when_cover_generation_fails(
+    tmp_path, monkeypatch
+):
+    """A successful song must survive a failed cover request."""
+    monkeypatch.chdir(tmp_path)
+
+    def fake_generate_song(**kwargs):
+        return Track(
+            id="cover-failure-test",
+            title="Happy Pop",
+            style="pop",
+            mood="happy",
+            duration_seconds=30,
+            is_vocal=False,
+            audio_path="song.mp3"
+        )
+
+    def fake_generate_cover(track):
+        raise app.CoverGenerationError(
+            "Cover service unavailable"
+        )
+
+    monkeypatch.setattr(
+        app, "generate_song", fake_generate_song
+    )
+    monkeypatch.setattr(
+        app, "generate_cover", fake_generate_cover
+    )
+
+    audio, cover, message = app.create_song(
+        "Pop", "Happy", 30, "Instrumental"
+    )
+
+    assert audio == "song.mp3"
+    assert cover is None
+    assert "cover" in message.lower()
+
+    saved = Library().get("cover-failure-test")
+
+    assert saved is not None, (
+        "Song was lost when album-cover generation failed!"
+    )
+    assert saved.audio_path == "song.mp3"
+    assert saved.cover_path is None
+
+
