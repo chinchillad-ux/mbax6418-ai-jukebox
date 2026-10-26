@@ -555,6 +555,14 @@ def build_app():
             border-radius: 18px;
             padding: 20px;
         }
+        
+        #dj-voice-settings {
+            border: 1px solid #14B8A6 !important;
+            border-radius: 12px !important;
+            background: rgba(20, 184, 166, 0.10) !important;
+            padding: 8px 12px;
+        }
+
 
 
         """
@@ -765,10 +773,13 @@ def build_app():
                     label="DJ Voice"
                 )
 
+                
                 with gr.Accordion(
-                    "🎛️ Custom Voice Settings (Optional)",
-                    open=False
+                    "🎤 Custom DJ Voice — Click to Expand (Optional)",
+                    open=False,
+                    elem_id="dj-voice-settings"
                 ):
+
                     dj_voice_reference = gr.File(
                         label="Upload Your Voice",
                         file_types=[".mp3", ".wav"],
