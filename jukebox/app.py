@@ -620,6 +620,12 @@ def build_app():
             font-size: 16px;
             font-weight: 700;
         }
+        
+        #dj-skip-button {
+            max-width: 180px;
+            margin-left: auto;
+        }
+
 
 
 
@@ -933,17 +939,12 @@ def build_app():
             )
 
             
+            
             with gr.Column(elem_id="dj-playback-panel"):
-                with gr.Row():
-                    start_playlist_btn = gr.Button(
-                        "▶️ Start DJ Set",
-                        variant="primary"
-                    )
-
-                    skip_playlist_btn = gr.Button(
-                        "⏭️ Skip Song",
-                        variant="secondary"
-                    )
+                start_playlist_btn = gr.Button(
+                    "▶️ Start DJ Set",
+                    variant="primary"
+                )
 
                 playback_status = gr.Markdown(
                     "Your DJ set is ready when you are."
@@ -954,6 +955,14 @@ def build_app():
                     interactive=False,
                     autoplay=True
                 )
+
+                skip_playlist_btn = gr.Button(
+                    "⏭️ Skip to Next Song",
+                    variant="secondary",
+                    size="sm",
+                    elem_id="dj-skip-button"
+                )
+
 
             start_playlist_btn.click(
                 fn=start_dj_set,
