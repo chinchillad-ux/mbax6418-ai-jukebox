@@ -916,9 +916,11 @@ def build_app():
                     "🔄 Refresh Available Songs"
                 )
 
-            playlist_preview = gr.Markdown(
-                "Your playlist is empty. Select songs above."
-            )
+            
+                playlist_preview = gr.Markdown(
+                    "Your playlist is empty. Select songs above."
+                )
+
 
 
             refresh_dj_btn.click(
