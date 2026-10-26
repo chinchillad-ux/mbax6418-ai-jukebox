@@ -762,23 +762,28 @@ def build_app():
                 label="DJ Voice"
             )
 
-            dj_voice_reference = gr.File(
-                label="Upload Your Voice (Optional)",
-                file_types=[".mp3", ".wav"],
-                type="filepath"
-            )
             
-            dj_voice_url = gr.Textbox(
-                label="🔗 Load Voice from URL",
-                placeholder="https://example.com/voice.wav",
-                info="Paste a direct HTTPS link to an MP3 or WAV recording."
-            )
+            with gr.Accordion(
+                "🎛️ Custom Voice Settings (Optional)",
+                open=False
+            ):
+                dj_voice_reference = gr.File(
+                    label="Upload Your Voice",
+                    file_types=[".mp3", ".wav"],
+                    type="filepath"
+                )
 
+                dj_voice_url = gr.Textbox(
+                    label="🔗 Load Voice from URL",
+                    placeholder="https://example.com/voice.wav",
+                    info="Paste a direct HTTPS link to an MP3 or WAV recording."
+                )
 
-            gr.Markdown(
-                "Only upload a voice recording you own "
-                "or have permission to use."
-            )
+                gr.Markdown(
+                    "Only upload a voice recording you own "
+                    "or have permission to use."
+                )
+
 
             dj_generate_btn = gr.Button(
                 "🎤 Generate DJ Introduction",
