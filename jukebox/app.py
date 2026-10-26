@@ -1226,6 +1226,10 @@ def build_app():
                     function pauseDeep(root) {{
                         if (!root) return;
 
+                        if (root.shadowRoot) {{
+                            pauseDeep(root.shadowRoot);
+                        }}
+
                         if (root instanceof HTMLMediaElement) {{
                             root.pause();
                         }}
