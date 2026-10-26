@@ -549,7 +549,8 @@ def build_app():
         
         #studio-controls,
         #studio-output,
-        #dj-intro-panel {
+        #dj-intro-panel,
+        #dj-playlist-setup {
             background: var(--block-background-fill);
             border: 1px solid var(--block-border-color);
             border-radius: 18px;
@@ -891,20 +892,23 @@ def build_app():
                 "Only songs with completed DJ introductions appear here."
             )
 
-            playlist_selector = gr.Dropdown(
-                choices=[
-                    (f"{track.title} — {track.style}", track.id)
-                    for track in Library().list()
-                    if track.audio_path and track.dj_audio_path
-                ],
-                multiselect=True,
-                label="Choose Your Playlist Songs",
-                info="Select multiple songs for your DJ set."
-            )
             
-            refresh_dj_btn = gr.Button(
-                "🔄 Refresh Available Songs"
-            )
+            with gr.Column(elem_id="dj-playlist-setup"):
+                playlist_selector = gr.Dropdown(
+                    choices=[
+                        (f"{track.title} — {track.style}", track.id)
+                        for track in Library().list()
+                        if track.audio_path and track.dj_audio_path
+                    ],
+                    multiselect=True,
+                    label="Choose Your Playlist Songs",
+                    info="Select multiple songs for your DJ set."
+                )
+
+                refresh_dj_btn = gr.Button(
+                    "🔄 Refresh Available Songs"
+                )
+
 
             refresh_dj_btn.click(
                 fn=refresh_dj_songs,
