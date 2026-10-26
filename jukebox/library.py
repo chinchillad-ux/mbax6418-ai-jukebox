@@ -5,10 +5,11 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from threading import RLock
 
 from jukebox.models import Track
 
-
+_LIBRARY_WRITE_LOCK = RLock()
 class LibraryError(RuntimeError):
     """A readable library failure; the previous saved library is preserved."""
 
@@ -52,26 +53,61 @@ class Library:
         track = self._tracks.get(track_id)
         return _copy(track) if track is not None else None
 
+    
     def add(self, track: Track) -> Track:
         saved = _copy(track)
-        candidate = {**self._tracks, saved.id: saved}
-        temporary: Path | None = None
-        try:
-            encoded = json.dumps({"version": 1, "tracks": [t.to_dict() for t in candidate.values()]}, ensure_ascii=False, allow_nan=False)
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.path.parent, prefix=".library-", suffix=".tmp", delete=False) as stream:
-                temporary = Path(stream.name)
-                stream.write(encoded)
-                stream.flush()
-                os.fsync(stream.fileno())
-            os.replace(temporary, self.path)
-        except (OSError, ValueError, TypeError):
-            raise LibraryError("The library could not be saved. Check disk space and folder permissions, then retry.") from None
-        finally:
-            if temporary is not None:
-                try:
-                    temporary.unlink(missing_ok=True)
-                except OSError:
-                    pass
-        self._tracks = candidate
+
+        with _LIBRARY_WRITE_LOCK:
+            # Reload the latest library before saving.
+            latest = Library(self.path)
+            candidate = {**latest._tracks, saved.id: saved}
+            temporary: Path | None = None
+
+            try:
+                encoded = json.dumps(
+                    {
+                        "version": 1,
+                        "tracks": [
+                            t.to_dict() for t in candidate.values()
+                        ]
+                    },
+                    ensure_ascii=False,
+                    allow_nan=False
+                )
+
+                self.path.parent.mkdir(
+                    parents=True, exist_ok=True
+                )
+
+                with tempfile.NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    dir=self.path.parent,
+                    prefix=".library-",
+                    suffix=".tmp",
+                    delete=False
+                ) as stream:
+                    temporary = Path(stream.name)
+                    stream.write(encoded)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+
+                os.replace(temporary, self.path)
+
+            except (OSError, ValueError, TypeError):
+                raise LibraryError(
+                    "The library could not be saved. "
+                    "Check disk space and folder permissions, "
+                    "then retry."
+                ) from None
+
+            finally:
+                if temporary is not None:
+                    try:
+                        temporary.unlink(missing_ok=True)
+                    except OSError:
+                        pass
+
+            self._tracks = candidate
+
         return _copy(saved)
