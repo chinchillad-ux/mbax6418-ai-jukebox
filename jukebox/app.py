@@ -548,7 +548,8 @@ def build_app():
         }
         
         #studio-controls,
-        #studio-output {
+        #studio-output,
+        #dj-intro-panel {
             background: var(--block-background-fill);
             border: 1px solid var(--block-border-color);
             border-radius: 18px;
@@ -748,56 +749,57 @@ def build_app():
                 "Choose a song and let your AI DJ introduce it!"
             )
 
-            dj_song = gr.Dropdown(
-                choices=[
-                    (track.title, track.id)
-                    for track in Library().list()
-                ],
-                label="Choose a Song"
-            )
-
-            dj_voice = gr.Radio(
-                choices=["Default Voice", "Custom Voice"],
-                value="Default Voice",
-                label="DJ Voice"
-            )
-
             
-            with gr.Accordion(
-                "🎛️ Custom Voice Settings (Optional)",
-                open=False
-            ):
-                dj_voice_reference = gr.File(
-                    label="Upload Your Voice",
-                    file_types=[".mp3", ".wav"],
-                    type="filepath"
+            with gr.Column(elem_id="dj-intro-panel"):
+                dj_song = gr.Dropdown(
+                    choices=[
+                        (track.title, track.id)
+                        for track in Library().list()
+                    ],
+                    label="Choose a Song"
                 )
 
-                dj_voice_url = gr.Textbox(
-                    label="🔗 Load Voice from URL",
-                    placeholder="https://example.com/voice.wav",
-                    info="Paste a direct HTTPS link to an MP3 or WAV recording."
+                dj_voice = gr.Radio(
+                    choices=["Default Voice", "Custom Voice"],
+                    value="Default Voice",
+                    label="DJ Voice"
                 )
 
-                gr.Markdown(
-                    "Only upload a voice recording you own "
-                    "or have permission to use."
+                with gr.Accordion(
+                    "🎛️ Custom Voice Settings (Optional)",
+                    open=False
+                ):
+                    dj_voice_reference = gr.File(
+                        label="Upload Your Voice",
+                        file_types=[".mp3", ".wav"],
+                        type="filepath"
+                    )
+
+                    dj_voice_url = gr.Textbox(
+                        label="🔗 Load Voice from URL",
+                        placeholder="https://example.com/voice.wav",
+                        info="Paste a direct HTTPS link to an MP3 or WAV recording."
+                    )
+
+                    gr.Markdown(
+                        "Only upload a voice recording you own "
+                        "or have permission to use."
+                    )
+
+                dj_generate_btn = gr.Button(
+                    "🎤 Generate DJ Introduction",
+                    variant="primary"
                 )
 
+                dj_status = gr.Markdown(
+                    "Select a song to create its DJ introduction."
+                )
 
-            dj_generate_btn = gr.Button(
-                "🎤 Generate DJ Introduction",
-                variant="primary"
-            )
+                dj_audio = gr.Audio(
+                    label="🎧 Your DJ Introduction",
+                    interactive=False
+                )
 
-            dj_status = gr.Markdown(
-                "Select a song to create its DJ introduction."
-            )
-
-            dj_audio = gr.Audio(
-                label="🎧 Your DJ Introduction",
-                interactive=False
-            )
             
             gr.Markdown("## 🎶 Build Your DJ Playlist")
             gr.Markdown(
