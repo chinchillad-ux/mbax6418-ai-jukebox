@@ -562,7 +562,17 @@ def build_app():
             background: rgba(20, 184, 166, 0.10) !important;
             padding: 8px 12px;
         }
+
         
+        #dj-song-picker,
+        #dj-song-picker .wrap,
+        #dj-song-picker .wrap-inner {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
       
         #dj-song-picker .secondary-wrap {
             border: 1px solid #14B8A6 !important;
