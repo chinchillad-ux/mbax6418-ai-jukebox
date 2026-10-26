@@ -562,6 +562,18 @@ def build_app():
             background: rgba(20, 184, 166, 0.10) !important;
             padding: 8px 12px;
         }
+        
+        #dj-song-picker {
+            border: 1px solid #14B8A6 !important;
+            border-radius: 12px !important;
+            background: rgba(20, 184, 166, 0.10) !important;
+            padding: 8px 12px;
+        }
+
+        #dj-song-picker:focus-within {
+            border-color: #5EEAD4 !important;
+        }
+
 
 
 
@@ -764,7 +776,8 @@ def build_app():
                         (track.title, track.id)
                         for track in Library().list()
                     ],
-                    label="Choose a Song"
+                    label="Choose a Song",
+                    elem_id="dj-song-picker"
                 )
 
                 dj_voice = gr.Radio(
