@@ -789,6 +789,15 @@ def build_app():
                 "🎤 Generate DJ Introduction",
                 variant="primary"
             )
+
+            dj_status = gr.Markdown(
+                "Select a song to create its DJ introduction."
+            )
+
+            dj_audio = gr.Audio(
+                label="🎧 Your DJ Introduction",
+                interactive=False
+            )
             
             gr.Markdown("## 🎶 Build Your DJ Playlist")
             gr.Markdown(
@@ -886,14 +895,7 @@ def build_app():
 
 
 
-            dj_status = gr.Markdown(
-                "Select a song to create its DJ introduction."
-            )
-
-            dj_audio = gr.Audio(
-                label="🎧 Your DJ Introduction",
-                interactive=False
-            )
+            
 
             dj_generate_btn.click(
                 fn=generate_dj_intro,
