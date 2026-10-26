@@ -42,24 +42,24 @@ def create_song(style, mood, duration, vocal_mode):
             "⚠️ Song generation failed. Please try again."
         )
 
+    
+    cover_warning = None
+
     try:
         track = generate_cover(track)
 
     except CoverGenerationError as error:
-        return (
-            track.audio_path,
-            None,
-            f"⚠️ Your song is ready, but the cover failed: {error}"
+        track.cover_path = None
+        cover_warning = (
+            f"⚠️ Your song was saved, but the cover failed: {error}"
         )
 
     except Exception:
-        return (
-            track.audio_path,
-            None,
-            "⚠️ Your song is ready, but cover art failed."
+        track.cover_path = None
+        cover_warning = (
+            "⚠️ Your song was saved, but cover art failed."
         )
 
-    
     try:
         Library().add(track)
 
@@ -67,7 +67,14 @@ def create_song(style, mood, duration, vocal_mode):
         return (
             track.audio_path,
             track.cover_path,
-            f"⚠️ Song and cover created, but saving failed: {error}"
+            f"⚠️ Song created, but saving failed: {error}"
+        )
+
+    if cover_warning:
+        return (
+            track.audio_path,
+            None,
+            cover_warning
         )
 
     return (
@@ -75,6 +82,7 @@ def create_song(style, mood, duration, vocal_mode):
         track.cover_path,
         f"✅ '{track.title}' and its cover were saved to your library!"
     )
+
 
     
 
