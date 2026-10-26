@@ -585,6 +585,27 @@ def build_app():
             border-color: #5EEAD4 !important;
         }
 
+        
+        /* Add breathing room below the song selector */
+        #dj-song-picker {
+            margin-bottom: 16px !important;
+        }
+
+        /* Align DJ Voice with Choose a Song */
+        #dj-voice-choice,
+        #dj-voice-choice .wrap {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        /* Match the Generate button's text size */
+        #dj-song-picker .block-label,
+        #dj-voice-choice .block-label {
+            font-size: 16px !important;
+            font-weight: 700 !important;
+        }
+
+
 
 
 
@@ -792,11 +813,14 @@ def build_app():
                     elem_id="dj-song-picker"
                 )
 
+                
                 dj_voice = gr.Radio(
                     choices=["Default Voice", "Custom Voice"],
                     value="Default Voice",
-                    label="DJ Voice"
+                    label="DJ Voice",
+                    elem_id="dj-voice-choice"
                 )
+
 
                 
                 with gr.Accordion(
