@@ -174,3 +174,61 @@ def test_dj_intro_uses_mocked_services(tmp_path, monkeypatch):
     saved = Library().get("dj-test")
     assert saved.dj_audio_path == "dj-intro.mp3"
 
+
+
+def test_dj_generation_preserves_newly_saved_songs(
+    tmp_path, monkeypatch
+):
+    """DJ generation must not erase songs saved while it runs."""
+    monkeypatch.chdir(tmp_path)
+
+    Library().add(
+        Track(
+            id="song-a",
+            title="Song A",
+            style="pop",
+            mood="happy",
+            duration_seconds=30,
+            is_vocal=False,
+            audio_path="song-a.mp3"
+        )
+    )
+
+    def fake_commentary(track):
+        # Simulate another song being saved while the
+        # DJ service is generating commentary.
+        Library().add(
+            Track(
+                id="song-b",
+                title="Song B",
+                style="indie",
+                mood="relaxed",
+                duration_seconds=30,
+                is_vocal=False,
+                audio_path="song-b.mp3"
+            )
+        )
+        return "Coming up next: Song A!"
+
+    def fake_speak(text, voice_ref_path=None):
+        return "dj-a.mp3"
+
+    monkeypatch.setattr(
+        app, "commentary_for_track", fake_commentary
+    )
+    monkeypatch.setattr(app, "speak", fake_speak)
+
+    audio, message = app.generate_dj_intro(
+        "song-a", "Default Voice", None, ""
+    )
+
+    assert audio == "dj-a.mp3"
+
+    saved_library = Library()
+
+    assert saved_library.get("song-a").dj_audio_path == "dj-a.mp3"
+    assert saved_library.get("song-b") is not None, (
+        "DJ generation erased another saved song!"
+    )
+
+
