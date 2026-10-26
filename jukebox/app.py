@@ -550,7 +550,8 @@ def build_app():
         #studio-controls,
         #studio-output,
         #dj-intro-panel,
-        #dj-playlist-setup {
+        #dj-playlist-setup,
+        #dj-playback-panel {
             background: var(--block-background-fill);
             border: 1px solid var(--block-border-color);
             border-radius: 18px;
@@ -931,20 +932,28 @@ def build_app():
                 {"ids": [], "index": 0, "phase": None}
             )
 
-            start_playlist_btn = gr.Button(
-                "▶️ Start DJ Set",
-                variant="primary"
-            )
+            
+            with gr.Column(elem_id="dj-playback-panel"):
+                with gr.Row():
+                    start_playlist_btn = gr.Button(
+                        "▶️ Start DJ Set",
+                        variant="primary"
+                    )
 
-            playback_status = gr.Markdown(
-                "Your DJ set is ready when you are."
-            )
+                    skip_playlist_btn = gr.Button(
+                        "⏭️ Skip Song",
+                        variant="secondary"
+                    )
 
-            playlist_audio = gr.Audio(
-                label="🎶 DJ Playlist Player",
-                interactive=False,
-                autoplay=True
-            )
+                playback_status = gr.Markdown(
+                    "Your DJ set is ready when you are."
+                )
+
+                playlist_audio = gr.Audio(
+                    label="🎶 DJ Playlist Player",
+                    interactive=False,
+                    autoplay=True
+                )
 
             start_playlist_btn.click(
                 fn=start_dj_set,
@@ -955,10 +964,7 @@ def build_app():
                     playback_status
                 ]
             )
-            
-            skip_playlist_btn = gr.Button(
-                "⏭️ Skip Song"
-            )
+
 
             skip_playlist_btn.click(
                 fn=skip_dj_track,
