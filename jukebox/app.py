@@ -845,6 +845,30 @@ def build_app():
                 elem_id="library-gallery"
             )
 
+            
+            saved_song_dropdown = gr.Dropdown(
+                choices=[
+                    (
+                        track.title + (
+                            " (cover pending)"
+                            if not track.cover_path else ""
+                        ),
+                        track.id
+                    )
+                    for track in Library().list()
+                ],
+                label="Choose Any Saved Song",
+                info="Includes songs waiting for album artwork."
+            )
+
+            retry_cover_btn = gr.Button(
+                "🎨 Retry Missing Album Cover",
+                variant="secondary"
+            )
+
+            retry_cover_path = gr.State()
+
+
                 
             
 
@@ -857,6 +881,23 @@ def build_app():
   
 
             refresh_btn.click(
+                fn=load_library,
+                inputs=[],
+                outputs=[library_gallery, library_status]
+            )
+
+            
+            saved_song_dropdown.change(
+                fn=select_saved_song,
+                inputs=[saved_song_dropdown],
+                outputs=[library_audio, selected_song_status]
+            )
+
+            retry_cover_btn.click(
+                fn=retry_cover,
+                inputs=[saved_song_dropdown],
+                outputs=[retry_cover_path, selected_song_status]
+            ).then(
                 fn=load_library,
                 inputs=[],
                 outputs=[library_gallery, library_status]
