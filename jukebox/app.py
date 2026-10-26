@@ -1187,17 +1187,42 @@ def build_app():
             )
 
            
-            # Stop all previews when the DJ playlist starts.
+           
+            # Pause other players without deleting their audio.
             playlist_audio.play(
-                fn=lambda: (None, None, None),
+                fn=None,
                 inputs=[],
-                outputs=[
-                    library_audio,
-                    song_preview,
-                    dj_audio
-                ],
+                outputs=[],
+                js="""() => {
+                    function pauseWithin(root) {
+                        if (!root) return;
+
+                        const nodes = [
+                            root,
+                            ...root.querySelectorAll("*")
+                        ];
+
+                        for (const node of nodes) {
+                            if (node instanceof HTMLMediaElement) {
+                                node.pause();
+                            }
+                            if (node.shadowRoot) {
+                                pauseWithin(node.shadowRoot);
+                            }
+                        }
+                    }
+
+                    for (const id of [
+                        "generated-song-player",
+                        "library-song-player",
+                        "dj-preview-player"
+                    ]) {
+                        pauseWithin(document.getElementById(id));
+                    }
+                }""",
                 queue=False
             )
+
 
 
 
