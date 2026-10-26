@@ -906,14 +906,22 @@ def build_app():
                 fn=import_demo_tracks,
                 inputs=[],
                 outputs=[library_gallery, library_status]
+            ).then(
+                fn=refresh_saved_song_choices,
+                inputs=[saved_song_dropdown],
+                outputs=[saved_song_dropdown]
             )
-  
 
             refresh_btn.click(
                 fn=load_library,
                 inputs=[],
                 outputs=[library_gallery, library_status]
+            ).then(
+                fn=refresh_saved_song_choices,
+                inputs=[saved_song_dropdown],
+                outputs=[saved_song_dropdown]
             )
+
 
             
             
@@ -953,6 +961,7 @@ def build_app():
                 outputs=[library_audio, selected_song_status]
             )
 
+            
             retry_cover_btn.click(
                 fn=retry_cover,
                 inputs=[saved_song_dropdown],
@@ -961,7 +970,12 @@ def build_app():
                 fn=load_library,
                 inputs=[],
                 outputs=[library_gallery, library_status]
+            ).then(
+                fn=refresh_saved_song_choices,
+                inputs=[saved_song_dropdown],
+                outputs=[saved_song_dropdown]
             )
+
 
 
 
