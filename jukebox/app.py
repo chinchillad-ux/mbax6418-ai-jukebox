@@ -911,6 +911,24 @@ def build_app():
                 outputs=[library_audio, selected_song_status]
             )
 
+        
+            saved_song_dropdown.change(
+                fn=select_saved_song,
+                inputs=[saved_song_dropdown],
+                outputs=[library_audio, selected_song_status]
+            )
+
+            retry_cover_btn.click(
+                fn=retry_cover,
+                inputs=[saved_song_dropdown],
+                outputs=[retry_cover_path, selected_song_status]
+            ).then(
+                fn=load_library,
+                inputs=[],
+                outputs=[library_gallery, library_status]
+            )
+
+
 
         
         with gr.Tab("🎙️ AI DJ"):
@@ -927,21 +945,7 @@ def build_app():
                     elem_id="dj-song-label"
                 )
 
-                saved_song_dropdown.change(
-                fn=select_saved_song,
-                inputs=[saved_song_dropdown],
-                outputs=[library_audio, selected_song_status]
-            )
-
-            retry_cover_btn.click(
-                fn=retry_cover,
-                inputs=[saved_song_dropdown],
-                outputs=[retry_cover_path, selected_song_status]
-            ).then(
-                fn=load_library,
-                inputs=[],
-                outputs=[library_gallery, library_status]
-            )
+               
 
 
                 dj_song = gr.Dropdown(
