@@ -1165,6 +1165,32 @@ def build_app():
                 show_progress="hidden"
             )
 
+            
+            # Stop the DJ set when a library preview starts.
+            library_audio.play(
+                fn=lambda: (
+                    None,
+                    {"ids": [], "index": 0, "phase": None},
+                    "⏹️ DJ set stopped for library preview."
+                ),
+                inputs=[],
+                outputs=[
+                    playlist_audio,
+                    playlist_state,
+                    playback_status
+                ],
+                queue=False
+            )
+
+            # Clear the library player when the DJ starts.
+            playlist_audio.play(
+                fn=lambda: None,
+                inputs=[],
+                outputs=[library_audio],
+                queue=False
+            )
+
+
 
 
 
