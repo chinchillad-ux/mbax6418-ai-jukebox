@@ -198,6 +198,35 @@ def select_saved_song(track_id):
         return None, f"⚠️ Could not load song: {error}"
 
 
+def refresh_saved_song_choices(selected_id=None):
+    """Refresh all saved songs, including those without covers."""
+    try:
+        tracks = Library().list()
+
+        choices = [
+            (
+                track.title + (
+                    " (cover pending)"
+                    if not track.cover_path else ""
+                ),
+                track.id
+            )
+            for track in tracks
+        ]
+
+        ids = [track.id for track in tracks]
+
+        return gr.update(
+            choices=choices,
+            value=selected_id if selected_id in ids else None
+        )
+
+    except LibraryError:
+        raise gr.Error(
+            "Could not refresh saved songs."
+        ) from None
+
+
 
 def download_voice_url(url):
     """Download a public HTTPS MP3/WAV voice sample."""
