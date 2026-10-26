@@ -820,6 +820,7 @@ def build_app():
                     )
 
                     song_preview = gr.Audio(
+                    elem_id="generated-song-player",
                         label="🎧 Your Generated Song",
                         interactive=False
                     )
@@ -944,6 +945,7 @@ def build_app():
             )
 
             library_audio = gr.Audio(
+                    elem_id="library-song-player",
                 label="Selected Song",
                 interactive=False
             )
@@ -1052,6 +1054,7 @@ def build_app():
                 )
 
                 dj_audio = gr.Audio(
+                    elem_id="dj-preview-player",
                     label="🎧 Your DJ Introduction",
                     interactive=False
                 )
@@ -1119,6 +1122,7 @@ def build_app():
                 )
 
                 playlist_audio = gr.Audio(
+                    elem_id="dj-playlist-player",
                     label="🎶 DJ Playlist Player",
                     interactive=False,
                     autoplay=True
@@ -1208,6 +1212,30 @@ def build_app():
                 show_progress="full"
             )
 
+
+        # Pause other transports in the browser immediately, before server callbacks.
+        for player, element_id in (
+            (song_preview, "generated-song-player"),
+            (library_audio, "library-song-player"),
+            (dj_audio, "dj-preview-player"),
+            (playlist_audio, "dj-playlist-player"),
+        ):
+            player.play(
+                fn=None,
+                inputs=[],
+                outputs=[],
+                js=f"""() => {{
+                    const active = document.getElementById('{element_id}');
+                    for (const id of ['generated-song-player', 'library-song-player',
+                                      'dj-preview-player', 'dj-playlist-player']) {{
+                        const root = document.getElementById(id);
+                        if (root && root !== active) {{
+                            root.querySelectorAll('audio, video').forEach(media => media.pause());
+                        }}
+                    }}
+                }}""",
+                queue=False,
+            )
 
     return demo
 
