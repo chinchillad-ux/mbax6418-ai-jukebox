@@ -604,6 +604,21 @@ def build_app():
             font-size: 16px !important;
             font-weight: 700 !important;
         }
+        
+        #dj-song-label {
+            margin-bottom: -8px !important;
+        }
+
+        #dj-song-label strong {
+            display: inline-block;
+            background: #0D9488;
+            color: white !important;
+            border-radius: 5px;
+            padding: 4px 6px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
 
 
 
@@ -804,14 +819,23 @@ def build_app():
 
             
             with gr.Column(elem_id="dj-intro-panel"):
+                
+                gr.Markdown(
+                    "**Choose a Song**",
+                    elem_id="dj-song-label"
+                )
+
                 dj_song = gr.Dropdown(
                     choices=[
                         (track.title, track.id)
                         for track in Library().list()
                     ],
                     label="Choose a Song",
+                    show_label=False,
+                    container=False,
                     elem_id="dj-song-picker"
                 )
+
 
                 
                 dj_voice = gr.Radio(
