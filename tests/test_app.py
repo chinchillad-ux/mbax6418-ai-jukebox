@@ -278,3 +278,60 @@ def test_song_is_saved_when_cover_generation_fails(
     assert saved.cover_path is None
 
 
+
+def test_retry_cover_keeps_original_song(
+    tmp_path, monkeypatch
+):
+    """Retry failed artwork without generating a new song."""
+    monkeypatch.chdir(tmp_path)
+
+    original = Track(
+        id="coverless-song",
+        title="Happy Pop",
+        style="pop",
+        mood="happy",
+        duration_seconds=30,
+        is_vocal=False,
+        audio_path="original-song.mp3"
+    )
+    Library().add(original)
+
+    attempts = []
+
+    def fake_cover(track):
+        attempts.append(track.id)
+
+        if len(attempts) == 1:
+            raise app.CoverGenerationError(
+                "Temporary cover service outage"
+            )
+
+        track.cover_path = "recovered-cover.png"
+        return track
+
+    def no_new_music(*args, **kwargs):
+        raise AssertionError(
+            "Retry must not generate a new song!"
+        )
+
+    monkeypatch.setattr(app, "generate_cover", fake_cover)
+    monkeypatch.setattr(app, "generate_song", no_new_music)
+
+    # First retry fails, but the song survives.
+    cover, message = app.retry_cover("coverless-song")
+    assert cover is None
+    assert Library().get("coverless-song").audio_path == (
+        "original-song.mp3"
+    )
+
+    # Second retry succeeds for the SAME song.
+    cover, message = app.retry_cover("coverless-song")
+
+    assert cover == "recovered-cover.png"
+    assert attempts == ["coverless-song", "coverless-song"]
+
+    saved = Library().get("coverless-song")
+    assert saved.audio_path == "original-song.mp3"
+    assert saved.cover_path == "recovered-cover.png"
+    assert len(Library().list()) == 1
+
