@@ -175,6 +175,30 @@ def select_library_song(evt: gr.SelectData):
         return None, "⚠️ Could not load the selected song."
 
 
+
+def select_saved_song(track_id):
+    """Play any saved song, even without album artwork."""
+    try:
+        track = Library().get(track_id) if track_id else None
+
+        if track is None:
+            return None, "⚠️ Please select a saved song."
+
+        if not track.audio_path:
+            return None, "⚠️ This song has no audio file."
+
+        message = f"🎵 Now selected: {track.title}"
+
+        if not track.cover_path:
+            message += " (album cover pending)"
+
+        return track.audio_path, message
+
+    except LibraryError as error:
+        return None, f"⚠️ Could not load song: {error}"
+
+
+
 def download_voice_url(url):
     """Download a public HTTPS MP3/WAV voice sample."""
 
