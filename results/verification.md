@@ -30,4 +30,4 @@ uv run --extra dev pytest -q
 Result: 163 passed, 2 warnings.
 
 The warnings did not cause test failures.
-Warning details have not yet been reviewed.
+Both warnings are Gradio deprecation notices for the `theme` and `css` parameters in `gr.Blocks()`. These parameters will need to move to `.launch()` when upgrading to Gradio 6.0. Neither warning affects the current functionality or test results. No changes are required for this PR.
