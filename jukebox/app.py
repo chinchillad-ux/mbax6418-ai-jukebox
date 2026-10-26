@@ -1174,43 +1174,7 @@ def build_app():
 
            
            
-            # Pause other players without deleting their audio.
-            playlist_audio.play(
-                fn=None,
-                inputs=[],
-                outputs=[],
-                js="""() => {
-                    function pauseWithin(root) {
-                        if (!root) return;
-
-                        const nodes = [
-                            root,
-                            ...root.querySelectorAll("*")
-                        ];
-
-                        for (const node of nodes) {
-                            if (node instanceof HTMLMediaElement) {
-                                node.pause();
-                            }
-                            if (node.shadowRoot) {
-                                pauseWithin(node.shadowRoot);
-                            }
-                        }
-                    }
-
-                    for (const id of [
-                        "generated-song-player",
-                        "library-song-player",
-                        "dj-preview-player"
-                    ]) {
-                        pauseWithin(document.getElementById(id));
-                    }
-                }""",
-                queue=False
-            )
-
-
-
+ 
 
 
          
@@ -1232,8 +1196,9 @@ def build_app():
             )
 
 
-        # Pause other transports in the browser immediately, before server callbacks.
-        for player, element_id in (
+      
+        # Pause other players without clearing saved audio.
+        for player, active_id in (
             (song_preview, "generated-song-player"),
             (library_audio, "library-song-player"),
             (dj_audio, "dj-preview-player"),
@@ -1244,17 +1209,52 @@ def build_app():
                 inputs=[],
                 outputs=[],
                 js=f"""() => {{
-                    const active = document.getElementById('{element_id}');
-                    for (const id of ['generated-song-player', 'library-song-player',
-                                      'dj-preview-player', 'dj-playlist-player']) {{
-                        const root = document.getElementById(id);
-                        if (root && root !== active) {{
-                            root.querySelectorAll('audio, video').forEach(media => media.pause());
+                    function findDeep(root, id) {{
+                        const match = root.getElementById?.(id);
+                        if (match) return match;
+
+                        for (const node of root.querySelectorAll("*")) {{
+                            if (node.id === id) return node;
+                            if (node.shadowRoot) {{
+                                const found = findDeep(node.shadowRoot, id);
+                                if (found) return found;
+                            }}
+                        }}
+                        return null;
+                    }}
+
+                    function pauseDeep(root) {{
+                        if (!root) return;
+
+                        if (root instanceof HTMLMediaElement) {{
+                            root.pause();
+                        }}
+
+                        for (const node of root.querySelectorAll("*")) {{
+                            if (node instanceof HTMLMediaElement) {{
+                                node.pause();
+                            }}
+                            if (node.shadowRoot) {{
+                                pauseDeep(node.shadowRoot);
+                            }}
+                        }}
+                    }}
+
+                    for (const id of [
+                        "generated-song-player",
+                        "library-song-player",
+                        "dj-preview-player",
+                        "dj-playlist-player"
+                    ]) {{
+                        if (id !== "{active_id}") {{
+                            pauseDeep(findDeep(document, id));
                         }}
                     }}
                 }}""",
-                queue=False,
+                queue=False
             )
+
+            
 
     return demo
 
