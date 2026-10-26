@@ -1186,13 +1186,19 @@ def build_app():
                 queue=False
             )
 
-            # Clear the library player when the DJ starts.
+           
+            # Stop all previews when the DJ playlist starts.
             playlist_audio.play(
-                fn=lambda: None,
+                fn=lambda: (None, None, None),
                 inputs=[],
-                outputs=[library_audio],
+                outputs=[
+                    library_audio,
+                    song_preview,
+                    dj_audio
+                ],
                 queue=False
             )
+
 
 
 
