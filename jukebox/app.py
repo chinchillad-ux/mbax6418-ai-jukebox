@@ -917,11 +917,17 @@ def build_app():
 
             
             
+            
             library_tab.select(
                 fn=load_library,
                 inputs=[],
                 outputs=[library_gallery, library_status]
+            ).then(
+                fn=refresh_saved_song_choices,
+                inputs=[saved_song_dropdown],
+                outputs=[saved_song_dropdown]
             )
+
 
             gr.Markdown("### 🎧 Listen to Your Music")
 
