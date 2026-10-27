@@ -36,9 +36,7 @@ def generate_cover(track: Track, description: str | None = None) -> Track:
         raise CoverGenerationError("Invalid cover-art URL configuration.") from None
     payload = {
         "model": settings.cover_art_model,
-        "prompt": cover_prompt(track) + (
-            f" Visual direction: {description.strip()}" if description else ""
-        ),
+        "prompt": cover_prompt(track, description),
         "n": 1,
         "size": "1024x1024",
         "response_format": "b64_json",
@@ -90,8 +88,18 @@ def generate_cover(track: Track, description: str | None = None) -> Track:
     return track
 
 
-def cover_prompt(track: Track) -> str:
-    """Translate track metadata and lyrical themes into original visual art."""
+def cover_prompt(track: Track, description: str | None = None) -> str:
+    """Use custom visual direction without feeding title/lyrics to the image model."""
+    if description is not None:
+        # Verbatim title/lyrics can become unwanted lettering despite instructions.
+        # Keep musical context, but let the user's description supply the imagery.
+        return (
+            "Create original square album artwork. "
+            f"Musical style: {track.style}. Mood: {track.mood}. "
+            f"Visual direction: {description.strip()} "
+            "Use expressive imagery, color, and composition to reflect this music. "
+            "Do not copy an existing album cover; no lettering, logos, or watermarks."
+        )
     prompt = (
         f'Create original square album artwork for "{track.title}". '
         f"Musical style: {track.style}. Mood: {track.mood}. "

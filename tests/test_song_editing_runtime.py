@@ -59,7 +59,9 @@ def test_running_app_rename_regenerate_failure_and_reload(tmp_path, monkeypatch)
         assert current.cover_path != original.cover_path
         assert current.cover_description == "Red planets"
         assert current.audio_path == original.audio_path and current.lyrics == original.lyrics
-        assert "Red planets" in requests[-1]["prompt"] and "After 🎵" in requests[-1]["prompt"]
+        assert "Red planets" in requests[-1]["prompt"]
+        assert "After 🎵" not in requests[-1]["prompt"]
+        assert original.lyrics not in requests[-1]["prompt"]
         kept_preview, failure = client.predict(original.id, "simulate outage", api_name="/regenerate_cover")
         assert "kept" in failure and Path(kept_preview).read_bytes() == Path(new_preview).read_bytes()
         assert Library().get(original.id) == current

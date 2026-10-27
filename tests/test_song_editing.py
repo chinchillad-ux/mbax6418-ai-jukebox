@@ -21,7 +21,8 @@ def saved(tmp_path, monkeypatch):
     return track
 
 
-def test_custom_description_reaches_existing_flux_request(saved, monkeypatch):
+@pytest.mark.parametrize("title", ["Original", "Changed song title"])
+def test_custom_description_reaches_existing_flux_request(saved, monkeypatch, title):
     import base64
     import json
     from io import BytesIO
@@ -44,6 +45,7 @@ def test_custom_description_reaches_existing_flux_request(saved, monkeypatch):
         return BytesIO(json.dumps({"data": [{"b64_json": base64.b64encode(image.getvalue()).decode()}]}).encode())
 
     monkeypatch.setattr(cover, "urlopen", request)
+    saved.title = title
     original = saved.to_dict()
     generated = cover.generate_cover(saved, description="  Violet moons over a quiet sea  ")
     assert generated.cover_path != original["cover_path"]
@@ -51,6 +53,11 @@ def test_custom_description_reaches_existing_flux_request(saved, monkeypatch):
     assert generated.cover_description == "Violet moons over a quiet sea"
     payload = json.loads(sent[0].data)
     assert "Violet moons over a quiet sea" in payload["prompt"]
+    assert saved.title not in payload["prompt"]
+    assert saved.lyrics not in payload["prompt"]
+    assert f"Musical style: {saved.style}" in payload["prompt"]
+    assert f"Mood: {saved.mood}" in payload["prompt"]
+    assert "no lettering, logos, or watermarks" in payload["prompt"]
     assert payload["model"] == settings.cover_art_model
     assert sent[0].full_url == "http://example.test:9006/v1/images/generations"
     assert generated.to_dict() == {**original, "cover_path": generated.cover_path,
