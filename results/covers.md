@@ -31,6 +31,12 @@ One complete, decodable PNG under `data/covers/`; `cover_path` assigned to that 
 - Returned object is the same Track. Its `cover_path` resolves to the saved file; all other Track fields remained unchanged.
 - `git check-ignore -v` matched `.gitignore:21:data/` for this PNG. `git ls-files -- <image-path>` returned no entry: the image is ignored and untracked.
 
+## Subsequent real-song integration evidence
+
+The initial check below used representative metadata. The later sample-generation record in [samples.md](samples.md) documents covers generated for three actual class-service songs, the generation prompts, regenerated artwork after feedback about lettering, and final exact-title overlays. The sample integration tests validate the three cover files and their manifest associations. This is existing teammate evidence, not a new live generation or browser check performed during close-out.
+
+The updated class handout specifies `http://dobolyi.com:9006/v1` as the cover base URL. The configuration example has been corrected accordingly; the client appends `/images/generations`.
+
 ## Visual assessment and limitations
 
 Visual inspection was completed by sending the saved PNG to the class Qwen vision service on port 9001. This is a model-assisted assessment, not a human review or a claim that the primary assistant directly viewed the pixels.
