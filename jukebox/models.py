@@ -22,6 +22,7 @@ class Track:
     cover_path: str | None = None  # set by cover art (issue #3)
     dj_commentary: str | None = None  # set by the AI DJ (issue #4)
     dj_audio_path: str | None = None  # set by the AI DJ (issue #4)
+    cover_description: str | None = None  # last successfully generated visual direction
 
     def to_dict(self) -> dict:
         return asdict(self)
