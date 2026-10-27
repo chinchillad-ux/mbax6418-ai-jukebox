@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AI Jukebox architecture</title>
+<style>body{margin:0;background:#020617;color:#e2e8f0;font:15px system-ui}main{max-width:1280px;margin:24px auto}svg{display:block;width:100%;height:auto}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:20px}.card{border:1px solid #334155;border-radius:10px;padding:16px}.card h2{font-size:16px;margin:0 0 10px}.card p,footer{color:#a8b6ca;line-height:1.5}footer{padding:20px}@media(max-width:700px){.cards{grid-template-columns:1fr}}</style></head><body><main>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="950" viewBox="0 0 1280 950" role="img" aria-labelledby="title desc">
+<title id="title">AI Jukebox architecture — merged main 47bf55a</title>
+<desc id="desc">Gradio browser events call app.py generation, editing and playlist callbacks. Server adapters use Qwen, FLUX, ACE-Step and Chatterbox. Atomic local library patches preserve track identity; rename invalidates DJ metadata. Selection-aware cover results preserve other songs and unsaved edits. The UI does not use the standalone Player controller.</desc>
+<defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1e293b" stroke-width="0.5"/></pattern><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0L8 4L0 8" fill="none" stroke="#94a3b8"/></marker></defs>
+<rect width="1280" height="950" fill="#020617"/><rect width="1280" height="950" fill="url(#grid)"/>
+<style>text{font-family:ui-monospace,Menlo,monospace;fill:#e2e8f0}.small{font-size:13px;fill:#a8b6ca}.label{font-size:15px}.heading{font-size:16px;font-weight:600}.line{fill:none;stroke:#94a3b8;stroke-width:1.5}</style>
+<text x="36" y="43" class="heading">AI JUKEBOX / SYSTEM ARCHITECTURE</text>
+<text x="36" y="71" class="small">Merged main 47bf55a · configuration correction + song editing + browser-race fixes</text>
+<rect x="28" y="105" width="836" height="720" rx="14" fill="none" stroke="#334155" stroke-dasharray="8 4"/>
+<text x="48" y="133" class="label">LOCAL COMPUTER · ONE APP PROCESS PER LIBRARY</text>
+<text x="920" y="133" class="label">CLASS SERVICES</text>
+<!-- Logical flows precede opaque component boxes. -->
+<path class="line" d="M580 265V325" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="595" y="300" class="small">UI events / media paths</text>
+<path class="line" d="M840 450H890M890 215V560M890 215H920M890 330H920M890 445H920M890 560H920"/>
+<path class="line" d="M904 215H920" marker-end="url(#arrow)"/><path class="line" d="M904 330H920" marker-end="url(#arrow)"/><path class="line" d="M904 445H920" marker-end="url(#arrow)"/><path class="line" d="M904 560H920" marker-end="url(#arrow)"/>
+<path d="M284 450H320" fill="none" stroke="#fb7185" stroke-dasharray="4 4"/>
+<path class="line" d="M580 595V660" marker-start="url(#arrow)" marker-end="url(#arrow)"/><text x="595" y="635" class="small">Read / patch latest Track</text>
+<path class="line" d="M284 724H320" marker-end="url(#arrow)"/>
+<rect x="60" y="150" width="780" height="115" rx="9" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"/>
+<text x="78" y="179" class="heading">Browser · Gradio interface</text>
+<text x="78" y="206" class="small">Create a Song · My Library + editor · AI DJ + playlist</text>
+<text x="78" y="229" class="small">Four audio widgets; play handlers pause the other three.</text>
+<text x="78" y="252" class="small">Playlist audio events → app.py callbacks; browser controls pause/resume.</text>
+<rect x="320" y="325" width="520" height="270" rx="9" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
+<text x="338" y="354" class="heading">Python application · jukebox/app.py</text>
+<text x="338" y="381" class="small">music.py → Qwen lyrics + ACE-Step music</text>
+<text x="338" y="404" class="small">cover.py → FLUX; dj.py → commentary + speech</text>
+<text x="338" y="427" class="small">Playlist: start_dj_set / advance_dj_set / skip_dj_track</text>
+<text x="338" y="450" class="small">gr.State: track IDs + index + speech/song phase</text>
+<text x="338" y="473" class="small">Editing: rename + custom cover + missing-cover retry</text>
+<text x="338" y="496" class="small">Rename → clear DJ metadata and this browser’s set</text>
+<text x="338" y="519" class="small">Cover → tagged session result → current-ID check</text>
+<text x="338" y="542" class="small">Nonqueued display keeps unsaved editor fields intact</text>
+<rect x="60" y="360" width="224" height="180" rx="9" fill="#0f172a" stroke="#fb7185" stroke-width="1.5"/>
+<text x="78" y="389" class="heading">Configuration</text>
+<text x="78" y="416" class="small">config.py / .env</text>
+<text x="78" y="439" class="small">Server-side credentials</text>
+<text x="78" y="462" class="small">Never in browser code</text>
+<text x="78" y="485" class="small">Exclude from Git / ZIP</text>
+<text x="78" y="508" class="small">Cover base includes /v1</text>
+<rect x="320" y="660" width="520" height="130" rx="9" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5"/>
+<text x="338" y="689" class="heading">Saved library + generated media</text>
+<text x="338" y="716" class="small">library.py · Track · data/library.json</text>
+<text x="338" y="739" class="small">Atomic JSON patch; single-process write lock</text>
+<text x="338" y="762" class="small">Media paths; stale-title DJ saves rejected</text>
+<text x="338" y="785" class="small">Runtime files / voice references excluded from Git</text>
+<rect x="60" y="660" width="224" height="130" rx="9" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5"/>
+<text x="78" y="689" class="heading">Bundled samples</text>
+<text x="78" y="716" class="small">assets/samples/</text>
+<text x="78" y="739" class="small">3 songs + covers</text>
+<text x="78" y="762" class="small">3 default DJ clips</text>
+<text x="78" y="785" class="small">Import by stable ID</text>
+<rect x="920" y="170" width="332" height="90" rx="9" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5"/>
+<text x="938" y="199" class="heading">Qwen · 9001</text>
+<text x="938" y="226" class="small">Lyrics + song-specific</text>
+<text x="938" y="249" class="small">commentary</text>
+<rect x="920" y="285" width="332" height="90" rx="9" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5"/>
+<text x="938" y="314" class="heading">FLUX · 9006</text>
+<text x="938" y="341" class="small">Default or custom-described</text>
+<text x="938" y="364" class="small">cover artwork</text>
+<rect x="920" y="400" width="332" height="90" rx="9" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5"/>
+<text x="938" y="429" class="heading">ACE-Step · 9007</text>
+<text x="938" y="456" class="small">Instrumental / vocal</text>
+<text x="938" y="479" class="small">song audio</text>
+<rect x="920" y="515" width="332" height="90" rx="9" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5"/>
+<text x="938" y="544" class="heading">Chatterbox · 9008</text>
+<text x="938" y="571" class="small">Default or reference-</text>
+<text x="938" y="594" class="small">conditioned DJ speech</text>
+<text x="920" y="652" class="small">Python-server requests only.</text>
+<text x="920" y="678" class="small">No port 9000 or paid services.</text>
+<text x="920" y="720" class="small">Arrows show logical calls,</text>
+<text x="920" y="743" class="small">not execution timing.</text>
+<text x="48" y="859" class="label">FLOW &amp; BOUNDARIES</text>
+<text x="48" y="886" class="small">Song: lyrics (if vocal) → music → cover → library. DJ: metadata → commentary → speech → browser set.</text>
+<text x="48" y="909" class="small">Edit: keep music/lyrics; rename invalidates DJ. Custom art omits automatic title/lyrics; failures retain saved art.</text>
+<text x="48" y="932" class="small">The standalone Player is not the UI transport. Other browsers may cache media; independent audible checks remain open.</text>
+</svg>
+<section class="cards"><article class="card"><h2>Actual playback path</h2><p>Gradio callbacks and session state select DJ/music paths. Browser play handlers coordinate the four audio widgets; the standalone Player is not connected to this UI.</p></article><article class="card"><h2>Editing without lost work</h2><p>Rename clears stale DJ metadata. Custom covers preserve audio and lyrics; identity-checked completions retain the current selection and unsaved drafts.</p></article><article class="card"><h2>Evidence boundaries</h2><p>204 automated tests pass on merged main. Recorded browser checks use synthetic transport. Live FLUX evidence is separate; independent review, audible playback and GitHub-ZIP checks remain open.</p></article></section>
+<footer>MBAX 6418 · Local documentation draft · 47bf55a8ec10498b3a4534e86d9461a68ae271b1 · No credentials or external dependencies.</footer></main></body></html>
