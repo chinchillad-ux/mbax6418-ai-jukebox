@@ -87,6 +87,84 @@ def create_song(style, mood, duration, vocal_mode):
     
 
 
+def rename_song(track_id, title):
+    """Rename metadata only; old spoken titles must not remain playable."""
+    if not isinstance(title, str) or not 1 <= len(title.strip()) <= 200:
+        return "⚠️ Enter a song title (1–200 characters)."
+    try:
+        library = Library()
+        track = library.get(track_id) if track_id else None
+        if track is None:
+            return "⚠️ Please select a saved song."
+        title = title.strip()
+        if title == track.title:
+            return "No change: this song already has that title."
+        library.update(track_id, title=title)
+        return "✅ Title saved. Generate a new DJ introduction for the renamed song."
+    except LibraryError as error:
+        return f"⚠️ Could not rename song: {error}"
+
+
+def regenerate_cover(track_id, description):
+    """Generate replacement art; keep the saved cover until everything succeeds."""
+    old_cover = None
+    try:
+        library = Library()
+        track = library.get(track_id) if track_id else None
+        if track is None:
+            return None, "⚠️ Please select a saved song."
+        old_cover = track.cover_path
+        if not isinstance(description, str) or not 1 <= len(description.strip()) <= 2000:
+            return old_cover, "⚠️ Enter a cover description (1–2000 characters)."
+        generated = generate_cover(track, description=description.strip())
+        if not generated.cover_path:
+            return old_cover, "⚠️ Cover generation returned no artwork. Previous cover kept."
+        library.update(track_id, cover_path=generated.cover_path,
+                       cover_description=generated.cover_description)
+        return generated.cover_path, "✅ New album cover saved. Your song audio is unchanged."
+    except (CoverGenerationError, LibraryError):
+        return old_cover, "⚠️ Could not regenerate or save artwork. Previous cover kept; please retry."
+    except Exception:  # noqa: BLE001 - UI boundary must not expose service details.
+        return old_cover, "⚠️ Could not generate album cover. Previous cover kept; please retry."
+
+
+def refresh_after_cover(track_id, message):
+    """Do not reload the editor after failure: keep the description for retry."""
+    if not message.startswith("✅"):
+        return gr.skip()
+    return refresh_saved_song_choices(track_id)
+
+
+def load_song_editor(track_id):
+    """Load editable metadata by stable ID, including legacy coverless songs."""
+    try:
+        track = Library().get(track_id) if track_id else None
+        if track is None:
+            return "", "", None
+        description = track.cover_description or (
+            f"Original {track.style} album artwork with a {track.mood} mood. "
+            "Expressive imagery and colors; no lettering or logos."
+        )
+        return track.title, description, track.cover_path
+    except LibraryError:
+        raise gr.Error("Could not load song details. Please refresh the library.") from None
+
+
+def rename_and_refresh(track_id, title):
+    """Refresh labels and stop this browser's cached DJ playback after a rename."""
+    message = rename_song(track_id, title)
+    if not message.startswith("✅"):
+        return (message, *(gr.skip() for _ in range(10)))
+    songs, playlist = refresh_dj_songs()
+    return (
+        message, load_library()[0], refresh_saved_song_choices(track_id),
+        songs, playlist, None, None, {"ids": [], "index": 0, "phase": None},
+        "Your playlist is empty. Select songs above.",
+        "Generate a new DJ introduction for the renamed song.",
+        "DJ set stopped after renaming. Rebuild your playlist to continue.",
+    )
+
+
 def retry_cover(track_id):
     """Retry album art without generating a new song."""
     try:
@@ -107,7 +185,7 @@ def retry_cover(track_id):
         if not track.cover_path:
             return None, "⚠️ Cover generation returned no artwork."
 
-        library.add(track)
+        library.update(track_id, cover_path=track.cover_path)
 
         return (
             track.cover_path,
@@ -159,20 +237,20 @@ def select_library_song(evt: gr.SelectData):
         index = evt.index
 
         if not isinstance(index, int) or not 0 <= index < len(tracks):
-            return None, "Please select an album cover."
+            return None, "Please select an album cover.", None
 
         track = tracks[index]
 
         if not track.audio_path:
-            return None, "⚠️ This song has no audio file."
+            return None, "⚠️ This song has no audio file.", track.id
 
         return (
             track.audio_path,
-            f"🎵 Now selected: {track.title}"
+            f"🎵 Now selected: {track.title}", track.id
         )
 
     except (LibraryError, OSError):
-        return None, "⚠️ Could not load the selected song."
+        return None, "⚠️ Could not load the selected song.", None
 
 
 
@@ -352,8 +430,8 @@ def generate_dj_intro(track_id, voice_choice, voice_file, voice_url):
         )
 
         # Save the DJ introduction with the correct song.
-        track.dj_audio_path = audio_path
-        library.add(track)
+        library.update(track_id, expected_title=track.title,
+                       dj_audio_path=audio_path, dj_commentary=commentary)
 
         return (
             audio_path,
@@ -898,6 +976,36 @@ def build_app():
 
             retry_cover_path = gr.State()
 
+            with gr.Accordion("Edit selected song", open=True):
+                gr.Markdown(
+                    "Choose a saved song above. Renaming keeps its audio and lyrics, "
+                    "but clears its old DJ introduction and stops this browser's DJ set."
+                )
+                song_title = gr.Textbox(label="Song title", max_length=200)
+                rename_btn = gr.Button("Save Song Title")
+                editor_cover = gr.Image(label="Current album cover", type="filepath",
+                                        interactive=False, height=240)
+                cover_description = gr.Textbox(
+                    label="Cover description", lines=3, max_length=2000,
+                    info="Describe the replacement artwork. Uses FLUX; no image upload."
+                )
+                regenerate_btn = gr.Button("Regenerate Album Cover")
+                edit_status = gr.Markdown()
+
+            saved_song_dropdown.change(
+                fn=load_song_editor, inputs=[saved_song_dropdown],
+                outputs=[song_title, cover_description, editor_cover]
+            )
+            regenerate_btn.click(
+                fn=regenerate_cover, inputs=[saved_song_dropdown, cover_description],
+                outputs=[editor_cover, edit_status]
+            ).then(
+                fn=load_library, inputs=[], outputs=[library_gallery, library_status]
+            ).then(
+                fn=refresh_after_cover, inputs=[saved_song_dropdown, edit_status],
+                outputs=[saved_song_dropdown]
+            )
+
 
                 
             
@@ -953,7 +1061,7 @@ def build_app():
             library_gallery.select(
                 fn=select_library_song,
                 inputs=[],
-                outputs=[library_audio, selected_song_status]
+                outputs=[library_audio, selected_song_status, saved_song_dropdown]
             )
 
         
@@ -1197,6 +1305,13 @@ def build_app():
 
 
       
+        rename_btn.click(
+            fn=rename_and_refresh, inputs=[saved_song_dropdown, song_title],
+            outputs=[edit_status, library_gallery, saved_song_dropdown, dj_song,
+                     playlist_selector, dj_audio, playlist_audio, playlist_state,
+                     playlist_preview, dj_status, playback_status]
+        )
+
         # Pause other players without clearing saved audio.
         for player, active_id in (
             (song_preview, "generated-song-player"),

@@ -19,8 +19,12 @@ class CoverGenerationError(RuntimeError):
     """Readable cover-generation failure without credentials or service details."""
 
 
-def generate_cover(track: Track) -> Track:
-    """Request one base64 PNG using vLLM-Omni's image-generation API."""
+def generate_cover(track: Track, description: str | None = None) -> Track:
+    """Request one PNG; optional visual direction augments the track's themes."""
+    if description is not None:
+        if not isinstance(description, str) or not 1 <= len(description.strip()) <= 2000:
+            raise CoverGenerationError("Enter a cover description (1–2000 characters).")
+        description = description.strip()
     settings = load_settings()
     try:
         endpoint = urlsplit(settings.cover_art_url)
@@ -32,7 +36,9 @@ def generate_cover(track: Track) -> Track:
         raise CoverGenerationError("Invalid cover-art URL configuration.") from None
     payload = {
         "model": settings.cover_art_model,
-        "prompt": cover_prompt(track),
+        "prompt": cover_prompt(track) + (
+            f" Visual direction: {description.strip()}" if description else ""
+        ),
         "n": 1,
         "size": "1024x1024",
         "response_format": "b64_json",
@@ -79,6 +85,8 @@ def generate_cover(track: Track) -> Track:
     finally:
         temporary.unlink(missing_ok=True)
     track.cover_path = str(destination)
+    if description is not None:
+        track.cover_description = description.strip()
     return track
 
 

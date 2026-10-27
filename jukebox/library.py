@@ -54,6 +54,27 @@ class Library:
         return _copy(track) if track is not None else None
 
     
+    def update(self, track_id: str, *, expected_title: str | None = None, **changes) -> Track:
+        """Patch editable fields on the latest record, without stale-record overwrites.
+
+        The lock covers reload through atomic save within this app process.
+        Long-running DJ requests may commit only if their title is still current.
+        """
+        allowed = {"title", "cover_path", "cover_description", "dj_commentary", "dj_audio_path"}
+        if not changes.keys() <= allowed:
+            raise LibraryError("Only song title, artwork, and DJ metadata can be edited.")
+        with _LIBRARY_WRITE_LOCK:
+            track = Library(self.path).get(track_id)
+            if track is None:
+                raise LibraryError("Song not found in your library.")
+            if expected_title is not None and track.title != expected_title:
+                raise LibraryError("The song title changed. Generate a new DJ introduction.")
+            if "title" in changes and changes["title"] != track.title:
+                changes = {**changes, "dj_commentary": None, "dj_audio_path": None}
+            for field, value in changes.items():
+                setattr(track, field, value)
+            return self.add(track)
+
     def add(self, track: Track) -> Track:
         saved = _copy(track)
 

@@ -23,7 +23,7 @@ def test_dict_contains_contract_fields():
     data = _track().to_dict()
     expected = {
         "id", "title", "style", "mood", "duration_seconds", "is_vocal",
-        "lyrics", "audio_path", "cover_path", "dj_commentary", "dj_audio_path",
+        "lyrics", "audio_path", "cover_path", "dj_commentary", "dj_audio_path", "cover_description",
     }
     assert set(data) == expected
 
