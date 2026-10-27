@@ -135,6 +135,33 @@ def refresh_after_cover(track_id, message):
     return refresh_saved_song_choices(track_id)
 
 
+def regenerate_editor_cover(track_id, description):
+    """Keep slow results off visible components until selection is rechecked."""
+    return track_id, *regenerate_cover(track_id, description)
+
+
+def retry_editor_cover(track_id):
+    return track_id, *retry_cover(track_id)
+
+
+def show_cover_result(result, selected_id):
+    """Apply to the current selection, never reload editable title/description.
+
+    This runs as a separate event after generation, so selected_id is read
+    from the browser after the slow request, not captured when it started.
+    Read the latest persisted image rather than an older queued result.
+    """
+    if not result:
+        return gr.skip(), gr.skip(), gr.skip()
+    track_id, _, message = result
+    choices = refresh_after_cover(selected_id, message)
+    if track_id != selected_id:
+        return gr.skip(), gr.skip(), choices
+    if not message.startswith("✅"):
+        return gr.skip(), message, gr.skip()
+    return load_song_editor(selected_id)[2], message, choices
+
+
 def load_song_editor(track_id):
     """Load editable metadata by stable ID, including legacy coverless songs."""
     try:
@@ -154,7 +181,7 @@ def rename_and_refresh(track_id, title):
     """Refresh labels and stop this browser's cached DJ playback after a rename."""
     message = rename_song(track_id, title)
     if not message.startswith("✅"):
-        return (message, *(gr.skip() for _ in range(10)))
+        return (message, *(gr.skip() for _ in range(11)))
     songs, playlist = refresh_dj_songs()
     return (
         message, load_library()[0], refresh_saved_song_choices(track_id),
@@ -162,6 +189,7 @@ def rename_and_refresh(track_id, title):
         "Your playlist is empty. Select songs above.",
         "Generate a new DJ introduction for the renamed song.",
         "DJ set stopped after renaming. Rebuild your playlist to continue.",
+        select_saved_song(track_id)[1],
     )
 
 
@@ -974,7 +1002,8 @@ def build_app():
                 variant="secondary"
             )
 
-            retry_cover_path = gr.State()
+            retry_cover_result = gr.State()
+            regenerated_cover_result = gr.State()
 
             with gr.Accordion("Edit selected song", open=True):
                 gr.Markdown(
@@ -997,13 +1026,14 @@ def build_app():
                 outputs=[song_title, cover_description, editor_cover]
             )
             regenerate_btn.click(
-                fn=regenerate_cover, inputs=[saved_song_dropdown, cover_description],
-                outputs=[editor_cover, edit_status]
+                fn=regenerate_editor_cover, inputs=[saved_song_dropdown, cover_description],
+                outputs=[regenerated_cover_result], api_name="regenerate_cover",
+                concurrency_id="cover-edit", concurrency_limit=1
+            ).then(
+                fn=show_cover_result, inputs=[regenerated_cover_result, saved_song_dropdown],
+                outputs=[editor_cover, edit_status, saved_song_dropdown], queue=False
             ).then(
                 fn=load_library, inputs=[], outputs=[library_gallery, library_status]
-            ).then(
-                fn=refresh_after_cover, inputs=[saved_song_dropdown, edit_status],
-                outputs=[saved_song_dropdown]
             )
 
 
@@ -1073,17 +1103,18 @@ def build_app():
 
             
             retry_cover_btn.click(
-                fn=retry_cover,
+                fn=retry_editor_cover,
                 inputs=[saved_song_dropdown],
-                outputs=[retry_cover_path, selected_song_status]
+                outputs=[retry_cover_result], api_name="retry_cover",
+                concurrency_id="cover-edit", concurrency_limit=1
+            ).then(
+                fn=show_cover_result,
+                inputs=[retry_cover_result, saved_song_dropdown],
+                outputs=[editor_cover, edit_status, saved_song_dropdown], queue=False
             ).then(
                 fn=load_library,
                 inputs=[],
                 outputs=[library_gallery, library_status]
-            ).then(
-                fn=refresh_saved_song_choices,
-                inputs=[saved_song_dropdown],
-                outputs=[saved_song_dropdown]
             )
 
 
@@ -1309,7 +1340,7 @@ def build_app():
             fn=rename_and_refresh, inputs=[saved_song_dropdown, song_title],
             outputs=[edit_status, library_gallery, saved_song_dropdown, dj_song,
                      playlist_selector, dj_audio, playlist_audio, playlist_state,
-                     playlist_preview, dj_status, playback_status]
+                     playlist_preview, dj_status, playback_status, selected_song_status]
         )
 
         # Pause other players without clearing saved audio.

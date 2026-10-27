@@ -110,7 +110,7 @@ def test_editor_loads_current_metadata_and_rename_resets_dj_ui(saved):
     assert title == saved.title and image == saved.cover_path
     assert saved.style in description and saved.mood in description
     result = app.rename_and_refresh(saved.id, "New title")
-    status, gallery, songs, dj, playlist, audio, playing, state, preview, dj_status, playback = result
+    status, gallery, songs, dj, playlist, audio, playing, state, preview, dj_status, playback, selected = result
     assert "saved" in status
     assert gallery == [(saved.cover_path, "New title")]
     assert songs["value"] == saved.id
@@ -121,6 +121,12 @@ def test_editor_loads_current_metadata_and_rename_resets_dj_ui(saved):
     assert state == {"ids": [], "index": 0, "phase": None}
     assert "empty" in preview and "new DJ" in dj_status
     assert "stopped" in playback
+    assert selected == "🎵 Now selected: New title"
+
+
+def test_rename_refreshes_now_selected_label(saved):
+    result = app.rename_and_refresh(saved.id, "New title")
+    assert result[-1] == "🎵 Now selected: New title"
     assert app.load_song_editor(None) == ("", "", None)
 
 
@@ -136,8 +142,44 @@ def test_editor_controls_are_wired_to_saved_id_without_image_upload(saved):
     regenerate = dependencies["regenerate_cover"]
     assert [components[i]["props"]["label"] for i in rename["inputs"]] == ["Choose Any Saved Song", "Song title"]
     assert [components[i]["props"]["label"] for i in regenerate["inputs"]] == ["Choose Any Saved Song", "Cover description"]
-    assert len(rename["outputs"]) == 11
+    assert len(rename["outputs"]) == 12
     assert any(d["api_name"] == "load_song_editor" for d in config["dependencies"])
+
+
+@pytest.mark.parametrize("api_name", ["regenerate_cover", "retry_cover"])
+def test_slow_cover_results_do_not_write_selection_bound_components(saved, api_name):
+    config = app.build_app().config
+    components = {c["id"]: c for c in config["components"]}
+    event = next(d for d in config["dependencies"] if d["api_name"] == api_name)
+    assert all(components[i]["type"] == "state" for i in event["outputs"])
+    render = next(d for d in config["dependencies"] if d["trigger_after"] == event["id"])
+    assert render["queue"] is False
+    labels = [components[i]["props"].get("label") for i in render["outputs"]]
+    assert "Song title" not in labels and "Cover description" not in labels
+    assert components[render["inputs"][-1]]["props"]["label"] == "Choose Any Saved Song"
+
+
+@pytest.mark.parametrize("selected", [None, "other"])
+def test_completed_cover_does_not_touch_another_selection(saved, selected):
+    from dataclasses import replace
+    Library().add(replace(saved, id="other", title="Other"))
+    result = (saved.id, "new.png", "✅ Saved")
+    image, message, choices = app.show_cover_result(result, selected)
+    assert (image, message) == (app.gr.skip(),) * 2
+    assert choices["choices"] == [(saved.title, saved.id), ("Other", "other")]
+    assert choices["value"] == selected
+
+
+def test_completed_cover_refreshes_only_image_and_choices(saved):
+    result = (saved.id, saved.cover_path, "✅ Saved")
+    image, message, choices = app.show_cover_result(result, saved.id)
+    assert image == saved.cover_path and message == "✅ Saved"
+    assert choices["value"] == saved.id
+
+
+def test_failed_cover_does_not_reload_editor_or_choices(saved):
+    result = (saved.id, saved.cover_path, "⚠️ Failed; retry")
+    assert app.show_cover_result(result, saved.id) == (app.gr.skip(), result[2], app.gr.skip())
 
 
 @pytest.mark.parametrize("title", ["", "   ", None, "x" * 201])

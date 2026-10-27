@@ -53,7 +53,8 @@ def test_running_app_rename_regenerate_failure_and_reload(tmp_path, monkeypatch)
         assert "Title saved" in rename[0]
         assert Library().get(original.id).title == "After 🎵"
         assert Library().get(original.id).dj_audio_path is None
-        new_preview, status = client.predict(original.id, "Red planets", api_name="/regenerate_cover")
+        client.predict(original.id, "Red planets", api_name="/regenerate_cover")
+        new_preview, status, _ = client.predict(original.id, api_name="/show_cover_result")
         assert "saved" in status and Path(new_preview).is_file()
         current = Library().get(original.id)
         assert current.cover_path != original.cover_path
@@ -62,8 +63,10 @@ def test_running_app_rename_regenerate_failure_and_reload(tmp_path, monkeypatch)
         assert "Red planets" in requests[-1]["prompt"]
         assert "After 🎵" not in requests[-1]["prompt"]
         assert original.lyrics not in requests[-1]["prompt"]
-        kept_preview, failure = client.predict(original.id, "simulate outage", api_name="/regenerate_cover")
-        assert "kept" in failure and Path(kept_preview).read_bytes() == Path(new_preview).read_bytes()
+        client.predict(original.id, "simulate outage", api_name="/regenerate_cover")
+        kept_preview, failure, choices = client.predict(original.id, api_name="/show_cover_result")
+        assert "kept" in failure
+        assert kept_preview == app.gr.skip() and choices == app.gr.skip()
         assert Library().get(original.id) == current
         title, description, preview = client.predict(original.id, api_name="/load_song_editor")
         assert (title, description) == ("After 🎵", "Red planets")
