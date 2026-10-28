@@ -2,7 +2,7 @@
 
 MBAX 6418 Assignment 3. Create instrumental or vocal songs, generate matching covers, and play a collection with song-specific spoken DJ introductions using the class services.
 
-This documentation draft describes merged source `47bf55a8ec10498b3a4534e86d9461a68ae271b1`, including the endpoint correction and song editor. The automated suite passes **204 tests with 17 warnings**. Independent review, final audible checks, and the teammate GitHub-ZIP installation are still open; see the submission checklist.
+This documentation draft describes merged source `47bf55a8ec10498b3a4534e86d9461a68ae271b1`, including the endpoint correction and song editor. The automated suite passes **204 tests with 17 warnings**. Fisher completed an independent GitHub-ZIP installation and technical feature checks, and approved the documentation at `4df1edc`. Human listening and a complete multi-song playback check remain open; see the submission checklist.
 
 ## Setup
 
@@ -24,7 +24,7 @@ uv run --frozen python --version
 
 `pyproject.toml` requires `python-dotenv>=1.0`, `Pillow>=10.0`, and `gradio>=5.0,<6.0`; tests add `pytest>=8.0` and `pytest-timeout>=2.3`. The build backend requires `setuptools>=68`. `--frozen` uses the supplied `uv.lock` without updating it. The tested environment used Python 3.11.16 and Gradio 5.50.0 on macOS.
 
-Keep the extracted directory together and run commands from its root, not inside `jukebox/`, because media paths are relative to the root. Git is not needed to run the ZIP. Platform-specific prerequisite installation still needs validation in the teammate ZIP check.
+Keep the extracted directory together and run commands from its root, not inside `jukebox/`, because media paths are relative to the root. Git is not needed to run the ZIP. Fisher completed the ZIP setup on macOS with Python 3.12.13. FFmpeg and ffprobe were initially missing and had to be installed before the audio checks. Confirm both version commands above succeed before proceeding. Windows setup has not been verified.
 
 ### Endpoint configuration
 
@@ -136,6 +136,19 @@ The table separates historical live-service checks from automated tests with moc
 | Bundled samples | Three manifest records, six MP3s, three PNGs | Valid media, persistence, controller order and recovery | Integration tests passed with actual assets and a silent transport/simulated clock, not the UI (`tests/test_sample_integration.py`). |
 | Browser switching and skip | All six player pairings, both directions; skip paused or near completion | Pause other player, retain audio; advance on skip | All reported PASS with no overlap. October 26 browser report does not name tester, browser, or exact SHA, or establish that skip preserves paused state (`results/verification.md`). |
 
+### Independent teammate ZIP test
+
+Fisher downloaded commit `9975855a8c41480edfbd7dc93d7dac5db09f25b2` from GitHub and installed it in a clean extracted folder on macOS, without reusing a clone or virtual environment. His report in [results/verification.md](results/verification.md#independent-github-zip-verification-issue-7-pr-17) records **204 tests passed, 17 warnings** and these results:
+
+| Inputs / action | Expected | Reported result |
+|---|---|---|
+| Pop / Happy / 60 seconds, once Instrumental and once Vocals | New songs, covers and library entries; lyrics for vocal track | Both generated and decoded at 60 seconds; vocal lyrics present and instrumental lyrics absent |
+| Rename to Verification Instrumental; regenerate sunset/ocean cover; refresh | Saved edits without replacement music | Title and cover persisted; UI reported audio unchanged |
+| Default DJ, then custom voice using generated DJ MP3 as reference | Saved speech for the selected track | Both outputs decoded; durations 13.48 and 12.80 seconds; brief playback starts verified |
+| One-item Copper Sunrise set; pause/resume, skip and restart | Controls work; introduction advances to music | Browser showed automatic speech-to-song transition, working controls and one unpaused audio element |
+
+No application fixes were needed. The setup issue was missing FFmpeg/ffprobe, which were installed. These are technical checks: Fisher did not listen to the generated audio or assess voice likeness. The report does not establish WAV-reference testing, a full multi-song sequence, or independent coverage of every slow-request editing scenario. Those checks remain separate from the completed ZIP installation.
+
 ### Song editor checks
 
 `results/song-editing.md` records:
@@ -205,12 +218,13 @@ Package the generated samples, not third-party music, lyrics, art, or voice samp
 
 - [ ] Complete deferred independent teammate review of song editing, including selection changes during slow regeneration/retry, draft preservation, rename/DJ invalidation, and reload persistence.
 - [ ] Have the team verify this documentation against the finished app and explain the findings in its own words. Confirm the original starter prompt was retained and any additions were made before building; this draft does not establish that process history.
-- [ ] Have a teammate download the selected version's **ZIP from GitHub**, extract it into a clean location, and install/run using only this README and class credentials. Resolve missing dependencies, files, or setup instructions. Record tester, OS/Python/browser, commit/archive, inputs, expected/actual results, and fixes.
-- [ ] In that copy, verify new instrumental and vocal songs, matching new covers, library availability, default and custom MP3/WAV DJ speech, and sample playback. Check audible pause/resume, skip, automatic DJ/song progression, and non-overlap. Keep untested formats/conditions explicit. Existing simulated failure/recovery tests cover a failure case; a deliberate live outage is not required.
-- [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. Human audible checks and the independent teammate ZIP test remain pending.
+- [x] Fisher installed and technically tested the GitHub ZIP for `9975855a8c41480edfbd7dc93d7dac5db09f25b2` in a clean folder; environment, setup friction and results are recorded in `results/verification.md`. Download the final submission commit's matching ZIP and recheck any affected setup/features if it changes.
+- [x] Record technical ZIP checks for new instrumental/vocal songs, covers, library edits, default DJ, MP3-reference DJ, and one-item playlist controls/transition.
+- [ ] Complete human listening and a full multi-song sequence, including audible pause/resume, skip and non-overlap. WAV-reference behavior was not established by Fisher's MP3 test. Existing simulated failure/recovery tests cover a failure case; a deliberate live outage is not required.
+- [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. Human audible checks remain pending; Fisher's separate ZIP test is recorded below the capture evidence.
 - [ ] Review and package the screenshots and SVG at their relative paths alongside the final `README.md`.
 - [ ] Check the final package includes code, `pyproject.toml`, `uv.lock`, `.env.example`, documentation, sample manifest, three song MP3s, three DJ MP3s, and three covers. Exclude credentials, uploads, and voice references; previous audits do not establish that the final package is clean.
-- [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Complete issue #7's requested review by `fisher-clements` before merging its documentation PR.
+- [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Fisher approved documentation commit `4df1edc`; request confirmation of subsequent documentation changes before merge.
 - [ ] After documentation review and final verification, submit one shared repository link, exact commit ID, and the **GitHub-downloaded ZIP for that same version** on Canvas. Nothing has been submitted by this documentation edit.
 
 Issue #7 says “fresh clone,” but the assignment specifically requires an extracted GitHub ZIP. A clone or local archive does not substitute. If fixes change the submission commit, download the matching ZIP and recheck affected setup/features.
