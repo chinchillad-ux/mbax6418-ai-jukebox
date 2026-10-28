@@ -85,7 +85,7 @@ Old media files are retained. Other open browsers may keep loaded audio until re
 
 ### Generate DJ speech and play a set
 
-1. In **AI DJ**, click **Refresh Available Songs**, then **Choose a Song**.
+1. In **AI DJ**, click **Refresh Available Songs**, then **Choose a Song**. The song dropdowns only update when you click this button — refresh after importing the demo songs or generating a new song, or the new tracks won't appear.
 2. Use **Default Voice** without an upload, or choose **Custom Voice** and upload an MP3 or WAV you own or have permission to use. The optional URL field accepts a direct public HTTPS MP3/WAV; uploads take precedence. URL downloads reject redirects, nonpublic addresses, nonstandard HTTPS ports, and files above 10 MB.
 3. Click **Generate DJ Introduction**. Qwen writes song-specific commentary and Chatterbox generates speech. Listen in the preview. For missing input or service errors, correct the problem and retry.
 4. Click **Refresh Available Songs** again, then select **Choose Your Playlist Songs**. Refresh clears selections, so select afterward. Only songs with music and DJ audio paths appear; starting the set checks that their files exist.
