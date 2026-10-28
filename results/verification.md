@@ -60,3 +60,27 @@ Captured October 27, 2026, at 18:16 MDT in automated headless Chrome 156.0.8078.
 - **Harness correction:** two initial attempts targeted the hidden fallback audio element rather than the active waveform audio element; they failed observation/selector checks and closed their browser/server. The successful capture inspected the waveform audio and verified its blob bytes. No application change was needed.
 
 **Limits and remaining review gate:** Chrome was launched with audio output muted. Advancing HTML audio time and a matching source demonstrate browser playback, not human audible listening, speech quality, full queue progression, pause/resume, skip, or cross-browser autoplay. The independent teammate installation from a **GitHub-downloaded ZIP**, including the required song generation, cover generation, and DJ-feature exercise and any fixes, is **still pending**. This capture does not complete that test, close issue #7, or constitute approval or merge authorization.
+
+## Independent GitHub-ZIP verification (Issue #7, PR #17)
+
+Date: October 27, 2026 (America/Denver)
+
+- **Tester:** `fisher-clements`, independent of the PR author.
+- **Source:** GitHub ZIP archive for commit `9975855a8c41480edfbd7dc93d7dac5db09f25b2`, downloaded from GitHub and extracted into a new temporary folder. The extraction had no `.git` directory; no repository clone or pre-existing virtual environment was reused.
+- **Environment:** macOS; Python 3.12.13 installed by `uv`; uv 0.11.27; Gradio 5.50.0; FFmpeg/ffprobe 9.0.2; local app at `127.0.0.1:7860`.
+- **Setup observation:** `uv sync --frozen --extra dev` succeeded in the clean extraction. FFmpeg and ffprobe were initially absent despite being required by the README, so FFmpeg 9.0.2 was installed before the documented audio checks could run. This is a prerequisite/setup note only; no application code was changed.
+- **Automated baseline:** `uv run --frozen pytest -q` completed with **204 passed, 17 warnings**. The warnings were Gradio and dependency deprecations; no test failed.
+
+| Feature | Inputs / action | Expected | Observed result |
+| --- | --- | --- | --- |
+| Instrumental song + cover | Pop, Happy, 60 seconds, Instrumental, then Generate My Song | Music without lyrics, cover, and saved library entry | Passed. A new `Happy Pop` record had `is_vocal=false`, no lyrics, a non-empty music file, and a cover. FFmpeg decoded the saved MP3 and measured 60.00 seconds. |
+| Vocal song + cover | Pop, Happy, 60 seconds, Vocals, then Generate My Song | Qwen-generated lyrics, music, cover, and saved library entry | Passed. A second `Happy Pop` record had `is_vocal=true`, non-empty generated lyrics, non-empty music, and a cover. FFmpeg decoded the MP3 and measured 60.00 seconds. Lyric originality/content was not evaluated by a human. |
+| Library editing + persistence | Renamed the instrumental to `Verification Instrumental`; regenerated its cover with a text-free sunset/ocean description; refreshed library | Preserve audio while title/cover persist | Passed. UI reported title saved and cover saved with audio unchanged; the refreshed library retained the renamed track and updated cover. |
+| Default DJ | Selected `Verification Instrumental`, Default Voice, Generate DJ Introduction | Saved playable song-specific DJ audio | Passed. UI reported a ready introduction. The generated MP3 was non-empty, FFmpeg-decoded, measured 13.48 seconds, and started during a 0.1-second local playback check. Human listening was not performed. |
+| Custom-reference DJ | Selected Custom Voice and supplied the app's own generated default-DJ MP3 as a non-personal reference; Generate DJ Introduction | Saved playable custom-reference DJ audio | Passed. UI replaced the preview with a new MP3. It was non-empty, FFmpeg-decoded, measured 12.80 seconds, and started during a 0.1-second local playback check. Voice likeness/quality was not human-confirmed. The temporary reference remained only under ignored `data/`. |
+| Bundled samples + playlist | Loaded 3 Demo Songs; queued Copper Sunrise; Start DJ Set | Speech begins automatically, then advances to song | Passed as an automated browser observation. Copper Sunrise speech began automatically; after approximately 16 seconds UI changed from `Now introducing` to `Now playing`, with the 30-second song player active at about 0:04. |
+| Pause/resume + skip + non-overlap | Paused and resumed the active DJ introduction, then skipped; restarted and observed DJ-to-song transition | Pause/resume works; skip advances; one active player | Passed as automated browser behavior. Pause changed to Play; resume succeeded; skip completed the one-item set. During later automatic song playback, deep shadow-DOM inspection found one unpaused audio element (the playlist song) and all other discovered audio elements paused. |
+
+**Human-judgment boundary:** no person listened to the generated instrumental, generated vocal, default DJ output, or custom-reference DJ output during this verification. The technical checks establish non-empty decoded files, brief playback start, UI state, and browser timing—not perceived intelligibility, sound quality, voice likeness, or subjective absence of audible overlap.
+
+**Fixes needed before app-code changes:** none observed. The only setup friction was the missing FFmpeg/ffprobe prerequisite, which the README identifies but does not provide platform-specific installation commands for. Consider documenting an OS-specific installation pointer before final submission; this verification did not change app code.
