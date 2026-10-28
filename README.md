@@ -96,7 +96,7 @@ Starting any of the four audio players pauses the others without clearing their 
 
 ## Interface screenshots
 
-These October 27, 2026 captures show the documented revision in isolated Chrome using bundled samples. No generation or playback controls were clicked. They illustrate the interface, not fresh generation or listening results.
+These October 27, 2026 captures show the documented app in isolated Chrome using bundled samples. The generation and library captures show the interface without starting playback. The DJ capture shows actual bundled speech playing after **Start DJ Set** was clicked; browser timing and audio-source checks are recorded in [playback verification](results/verification.md#bundled-dj-speech-playback-capture-issue-7-pr-17). No fresh AI generation or human listening test was performed.
 
 ![Song-generation controls](screenshots/song-generation.png)
 
@@ -106,9 +106,9 @@ Create a Song at its defaults, before generation.
 
 My Library with all three samples and Copper Sunrise selected for playback and editing.
 
-![DJ playlist ready to start](screenshots/dj-playlist.png)
+![DJ playlist actively playing bundled Copper Sunrise speech](screenshots/dj-playlist.png)
 
-AI DJ with three sample tracks queued but not started. **Issue #7 also requests a screenshot of the queue playing DJ speech; that capture is still needed.**
+AI DJ with all three sample tracks queued and **Now introducing: Copper Sunrise** displayed. The playlist player shows about 0:02 of its 0:14 introduction and a pause control. The active HTML audio element's time advanced with `paused=false`; its source bytes matched the bundled Copper Sunrise DJ MP3. This is browser playback evidence, not human audible-listening confirmation.
 
 ## Architecture
 
@@ -207,7 +207,8 @@ Package the generated samples, not third-party music, lyrics, art, or voice samp
 - [ ] Have the team verify this documentation against the finished app and explain the findings in its own words. Confirm the original starter prompt was retained and any additions were made before building; this draft does not establish that process history.
 - [ ] Have a teammate download the selected version's **ZIP from GitHub**, extract it into a clean location, and install/run using only this README and class credentials. Resolve missing dependencies, files, or setup instructions. Record tester, OS/Python/browser, commit/archive, inputs, expected/actual results, and fixes.
 - [ ] In that copy, verify new instrumental and vocal songs, matching new covers, library availability, default and custom MP3/WAV DJ speech, and sample playback. Check audible pause/resume, skip, automatic DJ/song progression, and non-overlap. Keep untested formats/conditions explicit. Existing simulated failure/recovery tests cover a failure case; a deliberate live outage is not required.
-- [ ] Capture the queue playing DJ speech for issue #7. Review and package the screenshots and SVG at their relative paths alongside the final `README.md`.
+- [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. Human audible checks and the independent teammate ZIP test remain pending.
+- [ ] Review and package the screenshots and SVG at their relative paths alongside the final `README.md`.
 - [ ] Check the final package includes code, `pyproject.toml`, `uv.lock`, `.env.example`, documentation, sample manifest, three song MP3s, three DJ MP3s, and three covers. Exclude credentials, uploads, and voice references; previous audits do not establish that the final package is clean.
 - [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Complete issue #7's requested review by `fisher-clements` before merging its documentation PR.
 - [ ] After documentation review and final verification, submit one shared repository link, exact commit ID, and the **GitHub-downloaded ZIP for that same version** on Canvas. Nothing has been submitted by this documentation edit.
