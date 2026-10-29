@@ -13,6 +13,7 @@ def setup(monkeypatch, tmp_path):
     monkeypatch.setattr(music, "load_settings", lambda: SETTINGS)
     monkeypatch.setattr(music, "_validate_audio", lambda path, duration: None)
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(music, "_creative_title", lambda *args, **kwargs: "Silver Horizon")
 
 def test_instrumental_omits_lyrics_and_saves_audio(monkeypatch):
     calls, replies = [], iter([wrapped({"task_id": "a"}), wrapped([{"status": 1, "result": json.dumps([{"file": "/v1/audio?path=a"}])}]), b"audio"])
