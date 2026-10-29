@@ -71,6 +71,14 @@ New media and `data/library.json` are saved under ignored `data/`. Keep these ru
 
 If music generation fails, check the error and configuration, then click **Retry Song Generation**. This repeats the whole creation flow. If only the cover fails, the app saves the music with a warning. Select the song marked **cover pending** under **Choose Any Saved Song** and click **Retry Missing Album Cover** to retry artwork without generating new music. A separate saving error means the generated song may not have entered the library.
 
+New songs receive a Qwen-generated title based on their lyrics, or on their
+style/mood for instrumentals. That title is set before cover generation and
+library saving, so later DJ introductions use the same metadata. A failed or
+invalid title request keeps successfully generated music as **Untitled Track**
+with a short identifier; use the song editor to rename it. Existing songs are
+not automatically renamed. Generated names are creative suggestions, not a
+guarantee of global uniqueness.
+
 ### Browse and edit the library
 
 Click **Load 3 Demo Songs** to import the bundled songs, covers, and existing DJ clips without service calls. Select a cover or use **Choose Any Saved Song**, then use **Selected Song** to play/pause. The dropdown also includes songs without artwork. **Refresh Library**, or entering the tab, reloads saved records. Reimporting samples restores their bundled metadata under the same IDs rather than creating duplicate IDs.
