@@ -75,60 +75,48 @@ class Library:
                 setattr(track, field, value)
             return self.add(track)
 
+    def _save(self, candidate: dict[str, Track]) -> None:
+        """Atomically publish a candidate under the process write lock."""
+        temporary = None
+        try:
+            encoded = json.dumps({"version": 1, "tracks": [t.to_dict() for t in candidate.values()]},
+                                 ensure_ascii=False, allow_nan=False)
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.path.parent,
+                                             prefix=".library-", suffix=".tmp", delete=False) as stream:
+                temporary = Path(stream.name)
+                stream.write(encoded)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, self.path)
+        except (OSError, ValueError, TypeError):
+            raise LibraryError("The library could not be saved. Check disk space and folder permissions, then retry.") from None
+        finally:
+            if temporary is not None:
+                try:
+                    temporary.unlink(missing_ok=True)
+                except OSError:
+                    pass
+        self._tracks = candidate
+
     def add(self, track: Track) -> Track:
         saved = _copy(track)
-
         with _LIBRARY_WRITE_LOCK:
-            # Reload the latest library before saving.
             latest = Library(self.path)
-            candidate = {**latest._tracks, saved.id: saved}
-            temporary: Path | None = None
-
-            try:
-                encoded = json.dumps(
-                    {
-                        "version": 1,
-                        "tracks": [
-                            t.to_dict() for t in candidate.values()
-                        ]
-                    },
-                    ensure_ascii=False,
-                    allow_nan=False
-                )
-
-                self.path.parent.mkdir(
-                    parents=True, exist_ok=True
-                )
-
-                with tempfile.NamedTemporaryFile(
-                    mode="w",
-                    encoding="utf-8",
-                    dir=self.path.parent,
-                    prefix=".library-",
-                    suffix=".tmp",
-                    delete=False
-                ) as stream:
-                    temporary = Path(stream.name)
-                    stream.write(encoded)
-                    stream.flush()
-                    os.fsync(stream.fileno())
-
-                os.replace(temporary, self.path)
-
-            except (OSError, ValueError, TypeError):
-                raise LibraryError(
-                    "The library could not be saved. "
-                    "Check disk space and folder permissions, "
-                    "then retry."
-                ) from None
-
-            finally:
-                if temporary is not None:
-                    try:
-                        temporary.unlink(missing_ok=True)
-                    except OSError:
-                        pass
-
-            self._tracks = candidate
-
+            self._save({**latest._tracks, saved.id: saved})
         return _copy(saved)
+
+    def remove(self, track_id: str) -> Track | None:
+        """Remove saved metadata only. Audio, covers and voice files are kept.
+
+        Reload under the same lock as add/update to preserve newer records.
+        Missing IDs are a safe no-op; failed saves leave disk and memory intact.
+        """
+        with _LIBRARY_WRITE_LOCK:
+            latest = Library(self.path)
+            removed = latest._tracks.get(track_id)
+            if removed is None:
+                self._tracks = latest._tracks
+                return None
+            self._save({key: value for key, value in latest._tracks.items() if key != track_id})
+            return _copy(removed)

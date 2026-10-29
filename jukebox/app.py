@@ -193,6 +193,40 @@ def rename_and_refresh(track_id, title):
     )
 
 
+def remove_and_refresh(track_id, playlist_ids):
+    """Remove metadata and invalidate this browser's cached media/set.
+
+    Clear previews only after a successful save. Remaining playlist selections
+    are preserved, but the set is stopped so it cannot play a removed record.
+    Other browser sessions need to refresh; their audio cannot be stopped here.
+    """
+    unchanged = lambda message: (message, *(gr.skip() for _ in range(17)))
+    if not track_id:
+        return unchanged("⚠️ Select a saved song to remove.")
+    try:
+        removed = Library().remove(track_id)
+    except LibraryError:
+        return unchanged("⚠️ Could not remove the song. Library unchanged; please retry.")
+    if removed is None:
+        return unchanged("⚠️ Song not found. Refresh the library and select a saved song.")
+    tracks = Library().list()
+    choices = [(track.title, track.id) for track in tracks]
+    playable = [(f"{track.title} — {track.style}", track.id) for track in tracks
+                if track.audio_path and track.dj_audio_path]
+    playable_ids = {track_id for _, track_id in playable}
+    remaining = [item for item in (playlist_ids or []) if item in playable_ids]
+    covers, count = load_library()
+    return (
+        f"✅ Removed '{removed.title}' from the library. Media files kept. Demo songs can be restored with Load 3 Demo Songs.",
+        covers, count, refresh_saved_song_choices(),
+        gr.update(choices=choices, value=None), gr.update(choices=playable, value=remaining),
+        None, None, None, None, {"ids": [], "index": 0, "phase": None},
+        preview_playlist(remaining), "Select a song to generate a DJ introduction.",
+        "DJ set stopped after library removal. Start the remaining selection to continue.",
+        "Select a saved song.", "", "", None,
+    )
+
+
 def retry_cover(track_id):
     """Retry album art without generating a new song."""
     try:
@@ -1002,6 +1036,10 @@ def build_app():
                 variant="secondary"
             )
 
+            remove_song_btn = gr.Button("Remove from Library", variant="secondary")
+            gr.Markdown("Removes the selected library entry and stops this browser's previews/DJ set. "
+                        "Audio and artwork files are kept. Demo songs can be loaded again.")
+
             retry_cover_result = gr.State()
             regenerated_cover_result = gr.State()
 
@@ -1341,6 +1379,15 @@ def build_app():
             outputs=[edit_status, library_gallery, saved_song_dropdown, dj_song,
                      playlist_selector, dj_audio, playlist_audio, playlist_state,
                      playlist_preview, dj_status, playback_status, selected_song_status]
+        )
+
+        remove_song_btn.click(
+            fn=remove_and_refresh, inputs=[saved_song_dropdown, playlist_selector],
+            outputs=[edit_status, library_gallery, library_status, saved_song_dropdown,
+                     dj_song, playlist_selector, song_preview, library_audio, dj_audio,
+                     playlist_audio, playlist_state, playlist_preview, dj_status,
+                     playback_status, selected_song_status, song_title, cover_description,
+                     editor_cover], api_name="remove_library_song"
         )
 
         # Pause other players without clearing saved audio.
