@@ -22,7 +22,7 @@ uv sync --frozen --extra dev
 uv run --frozen python --version
 ```
 
-`pyproject.toml` requires `python-dotenv>=1.0`, `Pillow>=10.0`, and `gradio>=5.0,<6.0`; tests add `pytest>=8.0` and `pytest-timeout>=2.3`. The build backend requires `setuptools>=68`. `--frozen` uses the supplied `uv.lock` without updating it. The tested environment used Python 3.11.16 and Gradio 5.50.0 on macOS.
+`pyproject.toml` requires `python-dotenv>=1.0`, `Pillow>=10.1`, and `gradio>=5.0,<6.0`; tests add `pytest>=8.0` and `pytest-timeout>=2.3`. The build backend requires `setuptools>=68`. `--frozen` uses the supplied `uv.lock` without updating it. The tested environment used Python 3.11.16 and Gradio 5.50.0 on macOS.
 
 Keep the extracted directory together and run commands from its root, not inside `jukebox/`, because media paths are relative to the root. Git is not needed to run the ZIP. Fisher completed the ZIP setup on macOS with Python 3.12.13. FFmpeg and ffprobe were initially missing and had to be installed before the audio checks. Confirm both version commands above succeed before proceeding. Windows setup has not been verified.
 
@@ -196,7 +196,7 @@ Separate audio widgets created a possible overlap problem. Handlers now pause th
 
 ### Separate image generation from exact lettering
 
-Initial sample covers had misspelled lettering. Regenerating text-free art and adding exact titles with Pillow fixed the bundled assets. Custom cover regeneration had a similar problem when the prompt automatically included title/lyrics; removing those additions produced one successful text-free live example. This is useful evidence, not a guarantee. Default cover generation still includes title/lyrics, and user descriptions can request text.
+Initial sample covers had misspelled lettering. Regenerating text-free art and adding exact titles with Pillow fixed the bundled assets. Custom cover regeneration had a similar problem when the prompt automatically included title/lyrics; removing those additions produced one successful text-free live example. This is useful evidence, not a guarantee. New-song generation, cover retry, and cover regeneration now omit literal titles and lyric verses from the FLUX prompt and add the exact saved title as a local Pillow text overlay. The lower gradient and wrapped text keep titles readable. Pillow supplies a bundled scalable fallback font, so a system font installation is not required. User-supplied descriptions can still request unwanted lettering; text-free output from the image model is encouraged, not guaranteed. Regenerate a cover after renaming a song if you want its baked-in title updated. See `results/cover-title-overlay.md` for verification.
 
 ## How the samples were generated
 

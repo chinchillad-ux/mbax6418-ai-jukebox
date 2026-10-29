@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "python-dotenv>=1.0",      # load class-service endpoints/key from .env
-    "Pillow>=10.0",           # validate PNG structure and decode image pixels
+    "Pillow>=10.1",           # validate PNG structure and decode image pixels
     "gradio>=5.0,<6.0",
 ]
 
