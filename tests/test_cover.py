@@ -38,7 +38,7 @@ def track():
 @pytest.fixture
 def png():
     output = BytesIO()
-    Image.new("RGB", (4, 4), "blue").save(output, format="PNG")
+    Image.new("RGB", (1024, 1024), "blue").save(output, format="PNG")
     return output.getvalue()
 
 
@@ -62,7 +62,11 @@ def test_saves_valid_png_and_updates_only_correct_track(monkeypatch, track, png)
     assert generate(track) is track
     saved = Path(track.cover_path)
     assert saved.parent == Path("data/covers")
-    assert saved.suffix == ".png" and saved.read_bytes() == png
+    assert saved.suffix == ".png"
+    assert saved.read_bytes() != png
+    with Image.open(saved) as rendered:
+        assert rendered.size == (1024, 1024)
+        assert rendered.getpixel((0, 0)) == (0, 0, 255)
     assert saved.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
     assert track.to_dict() == {**before, "cover_path": str(saved)}
     assert other.cover_path is None
@@ -174,15 +178,53 @@ def test_invalid_or_forbidden_endpoint_makes_no_request(monkeypatch, track, url)
     request.assert_not_called()
 
 
-def test_prompt_uses_track_details_and_lyrical_theme():
-    from jukebox.cover import cover_prompt
+def test_prompt_omits_title_and_lyrics_but_keeps_musical_context():
+    track = Track("t1", "Midnight Drive", "Synthwave", "Hopeful", 30, True,
+                  lyrics="We find our way home beneath the northern lights")
+    for description in (None, "Purple mountains at dusk"):
+        prompt = cover.cover_prompt(track, description)
+        assert track.title not in prompt
+        assert track.lyrics not in prompt
+        assert track.style in prompt and track.mood in prompt
+        assert "no lettering" in prompt
+        if description:
+            assert description in prompt
 
-    track = Track("t1", "Midnight Drive", "Synthwave", "Hopeful", 30, True)
-    instrumental_prompt = cover_prompt(track)
-    for value in (track.title, track.style, track.mood):
-        assert value in instrumental_prompt
-    track.lyrics = "We find our way home beneath the northern lights"
-    vocal_prompt = cover_prompt(track)
-    assert track.lyrics in vocal_prompt
-    assert vocal_prompt != instrumental_prompt
-    assert "theme" in vocal_prompt.lower()
+
+@pytest.mark.parametrize("title", ["Copper Sunrise", "Neon Night Drive", "A " * 99,
+                                  "W" * 200, "Café après la pluie"])
+def test_complete_title_fits_and_changes_only_lower_art(png, title):
+    output = cover.title_overlay(png, title)
+    with Image.open(BytesIO(output)) as image:
+        assert image.size == (1024, 1024)
+        assert image.getpixel((512, 200)) == (0, 0, 255)
+        # White title pixels prove lettering, rather than only the dark gradient.
+        assert any(r > 230 and g > 230 and b > 230
+                   for r, g, b in image.crop((0, 600, 1024, 1024)).getdata())
+    draw = cover.ImageDraw.Draw(Image.new("RGB", (1024, 1024)))
+    wrapped, font, box, spacing = cover._title_layout(draw, title.strip(), 1024, 1024)
+    assert wrapped.replace("\n", "").replace(" ", "") == title.strip().replace(" ", "")
+    assert box[2] - box[0] <= 912 and box[3] - box[1] <= 307.2
+
+
+def test_overlay_works_without_system_fonts(monkeypatch, png):
+    original = cover.ImageFont.truetype
+    def bundled_only(font, *args, **kwargs):
+        if isinstance(font, str):
+            raise OSError("No system font")
+        return original(font, *args, **kwargs)
+    monkeypatch.setattr(cover.ImageFont, "truetype", bundled_only)
+    with Image.open(BytesIO(cover.title_overlay(png, "Exact Title"))) as image:
+        assert image.size == (1024, 1024)
+
+
+def test_overlay_failure_preserves_existing_cover(monkeypatch, track, png, tmp_path):
+    mock_response(monkeypatch, image_response(png))
+    previous = tmp_path / "previous.png"
+    previous.write_bytes(png)
+    track.cover_path = str(previous)
+    monkeypatch.setattr(cover, "title_overlay", Mock(side_effect=OSError("Font failure")))
+    with pytest.raises(cover.CoverGenerationError, match="save"):
+        cover.generate_cover(track)
+    assert track.cover_path == str(previous) and previous.read_bytes() == png
+    assert not list(tmp_path.rglob("*.tmp"))
