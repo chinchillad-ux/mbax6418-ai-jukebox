@@ -94,6 +94,16 @@ Old media files are retained. Other open browsers may keep loaded audio until re
 
 Starting any of the four audio players pauses the others without clearing their files. Recorded browser checks cover switching and skip cases; final-version audible progression and autoplay checks remain open. If autoplay is blocked, try the play control and record what happens.
 
+## Studio theme
+
+The October 29 visual refresh uses a midnight background, violet action buttons,
+cyan accents, subtle CSS grid/gradient lighting and a CSS record graphic in the
+header. It needs no background image download or external font service. Visible
+keyboard focus and reduced-motion preferences are supported. The generation,
+library and DJ workflows are unchanged.
+
+![Studio theme, AI DJ tab](screenshots/studio-theme.png)
+
 ## Interface screenshots
 
 These October 27, 2026 captures show the documented app in isolated Chrome using bundled samples. The generation and library captures show the interface without starting playback. The DJ capture shows actual bundled speech playing after **Start DJ Set** was clicked; browser timing and audio-source checks are recorded in [playback verification](results/verification.md#bundled-dj-speech-playback-capture-issue-7-pr-17). No fresh AI generation or human listening test was performed.
