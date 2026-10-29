@@ -30,3 +30,18 @@ cover-title-overlay module were checked and preserved. The old app module was
 backed up in the review workspace. A restart is required for the running app to
 load the new styling. The final combined extracted app still needs the user's
 browser check after restart.
+
+## Focused text contrast follow-up (2026-10-29)
+
+The user reported white-on-white text while editing Song title. Explicit
+background, foreground and caret colors now cover text/number inputs and
+textareas, including focus and autofill. Selection uses a purple background
+and white text; range/radio/checkbox controls are excluded.
+
+In an isolated running app, the title field was filled and edited without
+blurring. Browser inspection confirmed document.activeElement was the title
+field, its background was rgb(13,21,39), and its text/caret were rgb(237,243,255).
+A screenshot was captured while the field remained focused after Backspace:
+screenshots/title-field-focus-fixed.png. No title was saved and no user library
+was changed. The patch was applied to the extracted app with its other fixes
+preserved; restart is required.

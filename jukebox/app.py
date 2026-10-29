@@ -836,7 +836,39 @@ def build_app():
 .gradio-container .tab-nav button[aria-selected="true"] {
     background: #7770eb25 !important; border-color: #8b80f080 !important; color: #ded8ff !important;
 }
-        """
+
+/* Keep editable text legible while focused, hovered, selected, or autofilled. */
+.gradio-container {
+    --input-background-fill-focus: #0d1527;
+    --input-background-fill-hover: #0d1527;
+}
+.gradio-container textarea,
+.gradio-container input[type="text"],
+.gradio-container input[type="number"],
+.gradio-container input:not([type]) {
+    background-color: #0d1527 !important;
+    color: #edf3ff !important;
+    caret-color: #edf3ff !important;
+}
+.gradio-container textarea:focus,
+.gradio-container input[type="text"]:focus,
+.gradio-container input[type="number"]:focus,
+.gradio-container input:not([type]):focus {
+    background-color: #0d1527 !important;
+    color: #edf3ff !important;
+    caret-color: #edf3ff !important;
+    border-color: #8d84ff !important;
+}
+.gradio-container textarea::selection, .gradio-container input::selection {
+    background: #6552ba; color: #ffffff;
+}
+.gradio-container input:-webkit-autofill,
+.gradio-container textarea:-webkit-autofill {
+    -webkit-text-fill-color: #edf3ff !important;
+    box-shadow: 0 0 0 1000px #0d1527 inset !important;
+    caret-color: #edf3ff !important;
+}
+"""
 
 
     ) as demo:
