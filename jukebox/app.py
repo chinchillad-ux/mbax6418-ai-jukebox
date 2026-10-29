@@ -698,144 +698,144 @@ def build_app():
     with gr.Blocks(
         title="AI Jukebox",
         theme=gr.themes.Soft(
-    primary_hue="teal",
+    primary_hue="violet",
     neutral_hue="slate"
 
         ),
         css="""
-        #library-gallery .grid-container {
-            grid-template-columns: repeat(
-                auto-fill, 200px
-            ) !important;
-            grid-auto-rows: 200px !important;
-            justify-content: start !important;
-            gap: 16px !important;
-        }
+/* Local CSS only: no remote images, fonts, or service requests. */
+.gradio-container, .gradio-container.dark {
+    --body-background-fill: #090e1d;
+    --background-fill-primary: #131b30;
+    --background-fill-secondary: #18223b;
+    --block-background-fill: #131b30;
+    --block-border-color: #303c58;
+    --block-label-background-fill: transparent;
+    --block-label-text-color: #bac9e5;
+    --body-text-color: #eaf0ff;
+    --body-text-color-subdued: #b2bfd9;
+    --block-title-text-color: #f0f4ff;
+    --input-background-fill: #0d1527;
+    --input-border-color: #384967;
+    --input-border-color-focus: #8d84ff;
+    --input-text-color: #edf3ff;
+    --input-placeholder-color: #a2b0cb;
+    --button-primary-background-fill: linear-gradient(110deg, #6754da, #8c43cb);
+    --button-primary-background-fill-hover: linear-gradient(110deg, #7863ed, #a451dc);
+    --button-primary-text-color: #fff;
+    --button-primary-border-color: #9c8eff;
+    --button-secondary-background-fill: #1d2a45;
+    --button-secondary-background-fill-hover: #2a3b5d;
+    --button-secondary-text-color: #e5edff;
+    --button-secondary-border-color: #40516f;
+    --color-accent: #67e8f9;
+    --color-accent-soft: #253557;
+    --checkbox-background-color: #17213a;
+    --checkbox-background-color-selected: #7364dd;
+    --checkbox-label-background-fill: #17213a;
+    --checkbox-label-background-fill-selected: #343262;
+    --checkbox-label-text-color: #e7edff;
+    --checkbox-label-text-color-selected: #fff;
+    --slider-color: #8d84ff;
+    --border-color-primary: #303c58;
+    --border-color-accent: #8d84ff;
+    --table-even-background-fill: #131b30;
+    --table-odd-background-fill: #18223b;
+    --font: 'Segoe UI', Arial, sans-serif;
+    --color-accent-primary: #9b8bff;
+    color-scheme: dark;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
+    background: radial-gradient(ellipse at 5% 0%, #30205480, transparent 42%),
+                radial-gradient(ellipse at 100% 28%, #06384b70, transparent 38%),
+                linear-gradient(#93a6da06 1px, transparent 1px),
+                linear-gradient(90deg, #93a6da06 1px, transparent 1px), #090e1d !important;
+    background-size: auto, auto, 44px 44px, 44px 44px, auto !important;
+    padding: 26px clamp(16px, 3vw, 52px) 56px !important;
+    min-height: 100vh;
+}
+.gradio-container .prose, .gradio-container .prose p { color: #c0cbe1; }
+.gradio-container .prose h1, .gradio-container .prose h2,
+.gradio-container .prose h3 { color: #f1f5ff; letter-spacing: -.025em; }
+.gradio-container .prose h2 { font-size: 1.55rem; margin-top: 18px; }
+.gradio-container a { color: #8fe9f1; }
+.gradio-container button { transition: background .15s ease, border-color .15s ease; }
+.gradio-container button:focus-visible, .gradio-container input:focus-visible,
+.gradio-container textarea:focus-visible { outline: 3px solid #67e8f9 !important; outline-offset: 3px; }
+.gradio-container button.primary { border-radius: 12px !important; min-height: 46px;
+    font-weight: 700; box-shadow: 0 6px 22px #6c45d72b; }
+.gradio-container button.secondary { border-radius: 12px !important; min-height: 42px; }
+.gradio-container input, .gradio-container textarea { color: #edf3ff !important; }
+.gradio-container .block-label { color: #c0cdeb !important; background: transparent !important; }
+.gradio-container .tab-nav { border-bottom: 1px solid #34425d !important; gap: 8px; padding-bottom: 10px; }
+.gradio-container .tab-nav button { border: 1px solid transparent; border-radius: 10px;
+    color: #b9c7e3 !important; padding: 12px 20px; font-weight: 600; }
+.gradio-container .tab-nav button.selected { background: #7770eb25 !important;
+    border-color: #8b80f080 !important; color: #dcd7ff !important; }
+#jukebox-hero { position: relative; isolation: isolate; overflow: hidden;
+    border: 1px solid #6b619278; border-radius: 24px;
+    padding: 36px 40px; margin-bottom: 22px;
+    background: radial-gradient(ellipse at 78% 5%, #4f287b95, transparent 60%),
+                linear-gradient(115deg, #151f38, #202240 55%, #123343);
+    box-shadow: 0 14px 38px #0000002e;
+}
+#jukebox-hero::after { content: ''; pointer-events: none; position: absolute;
+    width: 265px; height: 265px; right: 48px; top: -40px; z-index: -1;
+    border-radius: 50%; opacity: .6; border: 1px solid #91e9ff55;
+    background: radial-gradient(circle, #81e6ee 0 5px, #524a8a 6px 31px, transparent 32px),
+                repeating-radial-gradient(circle, #9ea3f022 0 1px, #101a3199 2px 9px);
+    box-shadow: 0 0 65px #8263ff40;
+}
+#jukebox-hero h1 { font-size: clamp(30px, 3.4vw, 46px); color: #fff !important; margin: 0 0 12px; }
+#jukebox-hero p { max-width: 65%; color: #c3d1ed !important; }
+#jukebox-hero strong { color: #8cebf0 !important; font-weight: 600; }
+#studio-controls, #studio-output, #dj-intro-panel, #dj-playlist-setup, #dj-playback-panel {
+    background: linear-gradient(145deg, #18223af5, #111a2df5);
+    border: 1px solid #34415e; border-radius: 20px; padding: 24px;
+    box-shadow: 0 12px 32px #0000001a;
+}
+#studio-controls, #dj-intro-panel { border-top: 2px solid #9684f2; }
+#studio-output, #dj-playback-panel { border-top: 2px solid #67d5e3; }
+#dj-playlist-setup { border-top: 2px solid #c281e5; }
+#dj-voice-settings { border: 1px solid #58618a !important; border-radius: 12px !important;
+    background: #28325466 !important; padding: 8px 12px; }
+#dj-song-picker { margin-bottom: 16px !important; }
+#dj-song-picker, #dj-song-picker .wrap, #dj-song-picker .wrap-inner {
+    background: transparent !important; box-shadow: none !important; border: none !important; }
+#dj-song-picker .secondary-wrap { background: #0d1527 !important; border: 1px solid #536181 !important;
+    border-radius: 12px !important; }
+#dj-song-label strong { display: inline-block; color: #c6d3ee !important;
+    font-size: 16px; font-weight: 600; background: transparent; }
+#dj-song-label { margin-bottom: -8px !important; }
+#dj-skip-button { max-width: 200px; margin-left: auto; }
+#library-gallery { border: 1px solid #34415e; border-radius: 18px; background: #10192b !important; }
+#library-gallery .grid-container { grid-template-columns: repeat(auto-fill, 200px) !important;
+    grid-auto-rows: 200px !important; justify-content: start !important; gap: 16px !important; }
+#library-gallery .caption-label { left: 0 !important; right: 0 !important; bottom: 0 !important;
+    max-width: 100% !important; box-sizing: border-box; padding: 9px 10px !important;
+    background: #0a1026eb !important; color: white !important; text-align: center;
+    font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; border-radius: 0 0 10px 10px; }
+@media (max-width: 700px) {
+    .gradio-container { padding: 14px 12px 32px !important; }
+    #jukebox-hero { padding: 26px 22px; }
+    #jukebox-hero p { max-width: 100%; }
+    #jukebox-hero::after { right: -100px; opacity: .18; }
+    #studio-controls, #studio-output, #dj-intro-panel, #dj-playlist-setup, #dj-playback-panel { padding: 16px; }
+    .gradio-container .tab-nav button { padding: 10px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .gradio-container * { transition: none !important; }
+}
 
-        
-        #library-gallery .caption-label {
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            max-width: 100% !important;
-            box-sizing: border-box;
-            padding: 8px 10px !important;
-            border-radius: 0 0 10px 10px;
-            background: rgba(15, 23, 42, 0.9) !important;
-            color: #ffffff !important;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #jukebox-hero {
-            background: linear-gradient(
-                115deg,
-                #0F172A 0%,
-                #0F766E 60%,
-                #14B8A6 100%
-            );
-            border-radius: 20px;
-            padding: 36px 40px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 24px rgba(15, 118, 110, 0.15);
-        }
-
-        #jukebox-hero h1,
-        #jukebox-hero p,
-        #jukebox-hero strong {
-            color: #FFFFFF !important;
-        }
-        
-        #studio-controls,
-        #studio-output,
-        #dj-intro-panel,
-        #dj-playlist-setup,
-        #dj-playback-panel {
-            background: var(--block-background-fill);
-            border: 1px solid var(--block-border-color);
-            border-radius: 18px;
-            padding: 20px;
-        }
-        
-        #dj-voice-settings {
-            border: 1px solid #14B8A6 !important;
-            border-radius: 12px !important;
-            background: rgba(20, 184, 166, 0.10) !important;
-            padding: 8px 12px;
-        }
-
-        
-        #dj-song-picker,
-        #dj-song-picker .wrap,
-        #dj-song-picker .wrap-inner {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-        }
-
-      
-        #dj-song-picker .secondary-wrap {
-            border: 1px solid #14B8A6 !important;
-            border-radius: 12px !important;
-            background: rgba(20, 184, 166, 0.10) !important;
-            overflow: hidden;
-        }
-
-        #dj-song-picker .secondary-wrap:focus-within {
-            border-color: #5EEAD4 !important;
-        }
-
-        
-        /* Add breathing room below the song selector */
-        #dj-song-picker {
-            margin-bottom: 16px !important;
-        }
-
-        /* Align DJ Voice with Choose a Song */
-        #dj-voice-choice,
-        #dj-voice-choice .wrap {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-        }
-
-        /* Match the Generate button's text size */
-        #dj-song-picker .block-label,
-        #dj-voice-choice .block-label {
-            font-size: 16px !important;
-            font-weight: 700 !important;
-        }
-        
-        #dj-song-label {
-            margin-bottom: -8px !important;
-        }
-
-        #dj-song-label strong {
-            display: inline-block;
-            background: #0D9488;
-            color: white !important;
-            border-radius: 5px;
-            padding: 4px 6px;
-            font-size: 16px;
-            font-weight: 700;
-        }
-        
-        #dj-skip-button {
-            max-width: 180px;
-            margin-left: auto;
-        }
-
-
-
-
-
-
-
-
+.gradio-container [data-testid="block-info"] {
+    background: transparent !important; color: #bfcce7 !important;
+    padding-left: 0 !important; font-family: 'Segoe UI', Arial, sans-serif !important;
+}
+#jukebox-hero { overflow: hidden !important; }
+#jukebox-hero .prose { overflow: visible !important; }
+.gradio-container .tab-nav button[aria-selected="true"] {
+    background: #7770eb25 !important; border-color: #8b80f080 !important; color: #ded8ff !important;
+}
         """
 
 
