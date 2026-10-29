@@ -80,7 +80,9 @@ def _creative_title(style: str, mood: str, lyrics: str | None, *, url: str, mode
             }, ensure_ascii=False)},
         ],
         "temperature": 0.9,
-        "max_tokens": 128,
+        "max_tokens": 256,
+        "chat_template_kwargs": {"enable_thinking": False},
+        "response_format": {"type": "json_object"},
     })
     try:
         content = response["choices"][0]["message"]["content"].strip()

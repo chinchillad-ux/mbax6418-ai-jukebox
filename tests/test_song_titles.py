@@ -16,6 +16,9 @@ def test_title_request_uses_correct_context_and_class_model(monkeypatch, lyrics)
     assert args[:3] == ('POST','http://example.test:9001/v1/chat/completions','dummy')
     payload=args[3]
     assert payload['model']=='class-qwen'
+    assert payload['chat_template_kwargs']=={'enable_thinking':False}
+    assert payload['response_format']=={'type':'json_object'}
+    assert payload['max_tokens']>=256
     context=json.loads(payload['messages'][1]['content'])
     assert context['lyrics']==lyrics
     assert context['mode']==('vocal' if lyrics else 'instrumental')
@@ -65,3 +68,26 @@ def test_title_http_failure_is_safe(monkeypatch):
     monkeypatch.setattr(music,'urlopen',Mock(side_effect=IncompleteRead(b'partial')))
     with pytest.raises(music.SongGenerationError):
         music._creative_title('Pop','Happy',None,url='http://example.test:9001/v1',model='qwen',key='dummy')
+
+
+def test_reasoning_only_response_is_not_a_title(monkeypatch):
+    monkeypatch.setattr(music, '_json', lambda *a, **kw: {
+        'choices': [{'finish_reason':'length', 'message': {'content':None}}]})
+    with pytest.raises(music.SongGenerationError, match='title'):
+        music._creative_title('Rock','Relaxed',None,url='http://example.test:9001/v1',model='qwen',key='dummy')
+
+
+def test_title_fallback_is_visible_in_creation_status(monkeypatch, tmp_path):
+    from jukebox import app
+    from jukebox.models import Track
+    monkeypatch.chdir(tmp_path)
+    track=Track('id','Untitled Track abc123','Rock','Relaxed',30,False,audio_path='music.mp3')
+    monkeypatch.setattr(app,'generate_song',lambda *a, **kw:track)
+    def artwork(t):
+        t.cover_path='cover.png'
+        return t
+    monkeypatch.setattr(app,'generate_cover',artwork)
+    audio, cover, status=app.create_song('Rock','Relaxed',30,'Instrumental')
+    assert audio=='music.mp3' and cover=='cover.png'
+    assert 'Qwen could not generate a title' in status
+    assert app.Library().get('id').audio_path=='music.mp3'
