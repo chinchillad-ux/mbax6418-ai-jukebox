@@ -1137,30 +1137,43 @@ def build_app():
             )
 
 
+           
             gr.Markdown("### 🎧 Listen to Your Music")
+            gr.Markdown(
+                "Browse songs freely without stopping your music. "
+                "Select a song, then click Play Selected Song."
+            )
 
             selected_song_status = gr.Markdown(
-                "Click an album cover above to select a song."
+                "Select a song above to load it into the player."
             )
 
             library_audio = gr.Audio(
-                    elem_id="library-song-player",
-                label="Selected Song",
-                interactive=False
+                elem_id="library-song-player",
+                label="Now Playing",
+                interactive=False,
+                autoplay=True
             )
 
+            play_selected_btn = gr.Button(
+                "▶️ Play Selected Song",
+                variant="primary"
+            )
+
+            # Browsing artwork changes the selection, not playback.
             library_gallery.select(
-                fn=select_library_song,
+                fn=browse_library_song,
                 inputs=[],
-                outputs=[library_audio, selected_song_status, saved_song_dropdown]
+                outputs=[saved_song_dropdown]
             )
 
-        
-            saved_song_dropdown.change(
+            # Only this button changes the loaded audio.
+            play_selected_btn.click(
                 fn=select_saved_song,
                 inputs=[saved_song_dropdown],
                 outputs=[library_audio, selected_song_status]
             )
+
 
             
             retry_cover_btn.click(
