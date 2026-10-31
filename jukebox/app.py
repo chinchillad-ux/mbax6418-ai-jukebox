@@ -1516,6 +1516,63 @@ def build_app():
                 queue=False
             )
 
+
+        # Remember the selected tab across browser refreshes.
+        demo.load(
+            fn=None,
+            inputs=[],
+            outputs=[],
+            js="""() => {
+                const key = "ai-jukebox-active-tab";
+                const ids = [
+                    "create-song-tab-button",
+                    "library-tab-button",
+                    "ai-dj-tab-button"
+                ];
+
+                function findDeep(root, id) {
+                    const match = root.getElementById?.(id);
+                    if (match) return match;
+
+                    for (const el of root.querySelectorAll("*")) {
+                        if (el.shadowRoot) {
+                            const found = findDeep(el.shadowRoot, id);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                }
+
+                let attempts = 0;
+                const timer = setInterval(() => {
+                    const buttons = ids.map(id => findDeep(document, id));
+                    attempts++;
+
+                    if (buttons.some(button => !button)) {
+                        if (attempts >= 20) clearInterval(timer);
+                        return;
+                    }
+
+                    clearInterval(timer);
+
+                    buttons.forEach((button, index) => {
+                        button.addEventListener("click", () => {
+                            localStorage.setItem(key, String(index));
+                        });
+                    });
+
+                    const saved = localStorage.getItem(key);
+                    if (saved !== null) {
+                        const index = Number(saved);
+                        if (Number.isInteger(index) &&
+                            index >= 0 && index < buttons.length) {
+                            buttons[index].click();
+                        }
+                    }
+                }, 100);
+            }"""
+        )
+
             
 
     return demo
