@@ -934,7 +934,7 @@ def build_app():
 
 
         
-        with gr.Tab("🎶 Create a Song"):
+        with gr.Tab("🎶 Create a Song", elem_id="create-song-tab"):
             gr.Markdown("## Create Your Next Hit")
             gr.Markdown(
                 "Choose your style, set the mood, "
@@ -1032,7 +1032,7 @@ def build_app():
 
 
         
-        with gr.Tab("💿 My Library") as library_tab:
+        with gr.Tab("💿 My Library", elem_id="library-tab") as library_tab:
             gr.Markdown("## Your Music Collection")
             gr.Markdown(
                 "All your AI-generated songs in one place."
@@ -1224,7 +1224,7 @@ def build_app():
 
 
         
-        with gr.Tab("🎙️ AI DJ"):
+        with gr.Tab("🎙️ AI DJ", elem_id="ai-dj-tab"):
             gr.Markdown("## 🎙️ Meet Your AI DJ")
             gr.Markdown(
                 "Choose a song and let your AI DJ introduce it!"
