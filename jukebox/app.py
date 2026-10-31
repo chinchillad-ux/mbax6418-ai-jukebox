@@ -1095,9 +1095,8 @@ def build_app():
             regenerated_cover_result = gr.State()
 
             with gr.Accordion("Edit selected song", open=True):
-                gr.Markdown(
-                    "Choose a saved song above. Renaming keeps its audio and lyrics, "
-                    "but clears its old DJ introduction and stops this browser's DJ set."
+                editor_help = gr.Markdown(
+                "Choose a saved song above to edit its title or cover art."
                 )
                 song_title = gr.Textbox(label="Song title", max_length=200)
                 rename_btn = gr.Button("Save Song Title")
@@ -1115,6 +1114,19 @@ def build_app():
                 fn=load_song_editor, inputs=[saved_song_dropdown],
                 outputs=[song_title, cover_description, editor_cover]
             )
+
+            
+            saved_song_dropdown.change(
+                fn=lambda track_id: (
+                    "Editing selected song. Renaming keeps its audio and lyrics, "
+                    "but clears its old DJ introduction and stops this browser's DJ set."
+                    if track_id else
+                    "Choose a saved song above to edit its title or cover art."
+                ),
+                inputs=[saved_song_dropdown],
+                outputs=[editor_help]
+            )
+
             regenerate_btn.click(
                 fn=regenerate_editor_cover, inputs=[saved_song_dropdown, cover_description],
                 outputs=[regenerated_cover_result], api_name="regenerate_cover",
