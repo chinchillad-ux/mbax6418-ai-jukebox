@@ -907,6 +907,31 @@ def build_app():
             elem_id="jukebox-hero"
         )
 
+        
+        theme_toggle_btn = gr.Button(
+            "🌙 Toggle Light / Dark Mode",
+            variant="secondary",
+            size="sm"
+        )
+
+        theme_toggle_btn.click(
+            fn=None,
+            inputs=[],
+            outputs=[],
+            js="""() => {
+                const root = document.body;
+                const dark = !root.classList.contains('dark');
+                root.classList.toggle('dark', dark);
+
+                const url = new URL(window.location.href);
+                url.searchParams.set(
+                    '__theme', dark ? 'dark' : 'light'
+                );
+                window.history.replaceState({}, '', url);
+            }"""
+        )
+
+
 
         
         with gr.Tab("🎶 Create a Song"):
