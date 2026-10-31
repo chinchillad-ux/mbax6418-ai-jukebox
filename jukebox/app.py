@@ -319,6 +319,26 @@ def select_library_song(evt: gr.SelectData):
 
 
 
+def browse_library_song(evt: gr.SelectData):
+    """Select an album for editing without interrupting playback."""
+    try:
+        tracks = [
+            track for track in Library().list()
+            if track.cover_path
+        ]
+        index = evt.index
+        if isinstance(index, int) and 0 <= index < len(tracks):
+            return tracks[index].id
+    except LibraryError:
+        pass
+
+    return gr.skip()
+
+
+
+
+
+
 def select_saved_song(track_id):
     """Play any saved song, even without album artwork."""
     try:
@@ -887,9 +907,34 @@ def build_app():
             elem_id="jukebox-hero"
         )
 
+        
+        theme_toggle_btn = gr.Button(
+            "🌙 Toggle Light / Dark Mode",
+            variant="secondary",
+            size="sm"
+        )
+
+        theme_toggle_btn.click(
+            fn=None,
+            inputs=[],
+            outputs=[],
+            js="""() => {
+                const root = document.body;
+                const dark = !root.classList.contains('dark');
+                root.classList.toggle('dark', dark);
+
+                const url = new URL(window.location.href);
+                url.searchParams.set(
+                    '__theme', dark ? 'dark' : 'light'
+                );
+                window.history.replaceState({}, '', url);
+            }"""
+        )
+
+
 
         
-        with gr.Tab("🎶 Create a Song"):
+        with gr.Tab("🎶 Create a Song", elem_id="create-song-tab"):
             gr.Markdown("## Create Your Next Hit")
             gr.Markdown(
                 "Choose your style, set the mood, "
@@ -987,7 +1032,7 @@ def build_app():
 
 
         
-        with gr.Tab("💿 My Library") as library_tab:
+        with gr.Tab("💿 My Library", elem_id="library-tab") as library_tab:
             gr.Markdown("## Your Music Collection")
             gr.Markdown(
                 "All your AI-generated songs in one place."
@@ -1039,7 +1084,10 @@ def build_app():
                 variant="secondary"
             )
 
+            retry_cover_status = gr.Markdown()
+
             remove_song_btn = gr.Button("Remove from Library", variant="secondary")
+            remove_status = gr.Markdown()
             gr.Markdown("Removes the selected library entry and stops this browser's previews/DJ set. "
                         "Audio and artwork files are kept. Demo songs can be loaded again.")
 
@@ -1047,12 +1095,12 @@ def build_app():
             regenerated_cover_result = gr.State()
 
             with gr.Accordion("Edit selected song", open=True):
-                gr.Markdown(
-                    "Choose a saved song above. Renaming keeps its audio and lyrics, "
-                    "but clears its old DJ introduction and stops this browser's DJ set."
+                editor_help = gr.Markdown(
+                "Choose a saved song above to edit its title or cover art."
                 )
                 song_title = gr.Textbox(label="Song title", max_length=200)
                 rename_btn = gr.Button("Save Song Title")
+                rename_status = gr.Markdown()
                 editor_cover = gr.Image(label="Current album cover", type="filepath",
                                         interactive=False, height=240)
                 cover_description = gr.Textbox(
@@ -1066,6 +1114,19 @@ def build_app():
                 fn=load_song_editor, inputs=[saved_song_dropdown],
                 outputs=[song_title, cover_description, editor_cover]
             )
+
+            
+            saved_song_dropdown.change(
+                fn=lambda track_id: (
+                    "Editing selected song. Renaming keeps its audio and lyrics, "
+                    "but clears its old DJ introduction and stops this browser's DJ set."
+                    if track_id else
+                    "Choose a saved song above to edit its title or cover art."
+                ),
+                inputs=[saved_song_dropdown],
+                outputs=[editor_help]
+            )
+
             regenerate_btn.click(
                 fn=regenerate_editor_cover, inputs=[saved_song_dropdown, cover_description],
                 outputs=[regenerated_cover_result], api_name="regenerate_cover",
@@ -1117,30 +1178,43 @@ def build_app():
             )
 
 
+           
             gr.Markdown("### 🎧 Listen to Your Music")
+            gr.Markdown(
+                "Browse songs freely without stopping your music. "
+                "Select a song, then click Play Selected Song."
+            )
 
             selected_song_status = gr.Markdown(
-                "Click an album cover above to select a song."
+                "Select a song above to load it into the player."
             )
 
             library_audio = gr.Audio(
-                    elem_id="library-song-player",
-                label="Selected Song",
-                interactive=False
+                elem_id="library-song-player",
+                label="Now Playing",
+                interactive=False,
+                autoplay=True
             )
 
+            play_selected_btn = gr.Button(
+                "▶️ Play Selected Song",
+                variant="primary"
+            )
+
+            # Browsing artwork changes the selection, not playback.
             library_gallery.select(
-                fn=select_library_song,
+                fn=browse_library_song,
                 inputs=[],
-                outputs=[library_audio, selected_song_status, saved_song_dropdown]
+                outputs=[saved_song_dropdown]
             )
 
-        
-            saved_song_dropdown.change(
+            # Only this button changes the loaded audio.
+            play_selected_btn.click(
                 fn=select_saved_song,
                 inputs=[saved_song_dropdown],
                 outputs=[library_audio, selected_song_status]
             )
+
 
             
             retry_cover_btn.click(
@@ -1151,7 +1225,7 @@ def build_app():
             ).then(
                 fn=show_cover_result,
                 inputs=[retry_cover_result, saved_song_dropdown],
-                outputs=[editor_cover, edit_status, saved_song_dropdown], queue=False
+                outputs=[editor_cover, retry_cover_status, saved_song_dropdown], queue=False
             ).then(
                 fn=load_library,
                 inputs=[],
@@ -1162,7 +1236,7 @@ def build_app():
 
 
         
-        with gr.Tab("🎙️ AI DJ"):
+        with gr.Tab("🎙️ AI DJ", elem_id="ai-dj-tab"):
             gr.Markdown("## 🎙️ Meet Your AI DJ")
             gr.Markdown(
                 "Choose a song and let your AI DJ introduce it!"
@@ -1379,14 +1453,14 @@ def build_app():
       
         rename_btn.click(
             fn=rename_and_refresh, inputs=[saved_song_dropdown, song_title],
-            outputs=[edit_status, library_gallery, saved_song_dropdown, dj_song,
+            outputs=[rename_status, library_gallery, saved_song_dropdown, dj_song,
                      playlist_selector, dj_audio, playlist_audio, playlist_state,
                      playlist_preview, dj_status, playback_status, selected_song_status]
         )
 
         remove_song_btn.click(
             fn=remove_and_refresh, inputs=[saved_song_dropdown, playlist_selector],
-            outputs=[edit_status, library_gallery, library_status, saved_song_dropdown,
+            outputs=[remove_status, library_gallery, library_status, saved_song_dropdown,
                      dj_song, playlist_selector, song_preview, library_audio, dj_audio,
                      playlist_audio, playlist_state, playlist_preview, dj_status,
                      playback_status, selected_song_status, song_title, cover_description,
@@ -1453,6 +1527,63 @@ def build_app():
                 }}""",
                 queue=False
             )
+
+
+        # Remember the selected tab across browser refreshes.
+        demo.load(
+            fn=None,
+            inputs=[],
+            outputs=[],
+            js="""() => {
+                const key = "ai-jukebox-active-tab";
+                const ids = [
+                    "create-song-tab-button",
+                    "library-tab-button",
+                    "ai-dj-tab-button"
+                ];
+
+                function findDeep(root, id) {
+                    const match = root.getElementById?.(id);
+                    if (match) return match;
+
+                    for (const el of root.querySelectorAll("*")) {
+                        if (el.shadowRoot) {
+                            const found = findDeep(el.shadowRoot, id);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                }
+
+                let attempts = 0;
+                const timer = setInterval(() => {
+                    const buttons = ids.map(id => findDeep(document, id));
+                    attempts++;
+
+                    if (buttons.some(button => !button)) {
+                        if (attempts >= 20) clearInterval(timer);
+                        return;
+                    }
+
+                    clearInterval(timer);
+
+                    buttons.forEach((button, index) => {
+                        button.addEventListener("click", () => {
+                            localStorage.setItem(key, String(index));
+                        });
+                    });
+
+                    const saved = localStorage.getItem(key);
+                    if (saved !== null) {
+                        const index = Number(saved);
+                        if (Number.isInteger(index) &&
+                            index >= 0 && index < buttons.length) {
+                            buttons[index].click();
+                        }
+                    }
+                }, 100);
+            }"""
+        )
 
             
 
