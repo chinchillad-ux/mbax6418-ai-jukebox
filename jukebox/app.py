@@ -319,6 +319,26 @@ def select_library_song(evt: gr.SelectData):
 
 
 
+def browse_library_song(evt: gr.SelectData):
+    """Select an album for editing without interrupting playback."""
+    try:
+        tracks = [
+            track for track in Library().list()
+            if track.cover_path
+        ]
+        index = evt.index
+        if isinstance(index, int) and 0 <= index < len(tracks):
+            return tracks[index].id
+    except LibraryError:
+        pass
+
+    return gr.skip()
+
+
+
+
+
+
 def select_saved_song(track_id):
     """Play any saved song, even without album artwork."""
     try:
