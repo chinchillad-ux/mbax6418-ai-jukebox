@@ -83,6 +83,21 @@ Under **Edit selected song**:
 
 Old media files are retained. Other open browsers may keep loaded audio until refreshed. These are local-library safeguards, not multi-process coordination.
 
+### Remove a song
+
+In **My Library**, choose a song under **Choose Any Saved Song**, then click
+**Remove from Library**. The saved entry disappears from the gallery, count,
+song choices and playlist choices, including after restarting the app.
+
+Removal stops and clears this browser's audio previews and DJ set. Remaining
+playlist selections are kept; click **Start DJ Set** to start them again. If
+removal fails, the existing library, selection and playback are left unchanged.
+The song's audio, cover and DJ files are retained on disk. Bundled samples can
+be restored using **Load 3 Demo Songs**. This is removal from the library, not
+permanent media deletion. Other browsers must refresh; their cached audio is
+not remotely stopped. Library persistence across page refreshes/restarts remains
+intentional; the assignment's session retention is a minimum requirement.
+
 ### Generate DJ speech and play a set
 
 1. In **AI DJ**, click **Refresh Available Songs**, then **Choose a Song**. The song dropdowns only update when you click this button — refresh after importing the demo songs or generating a new song, or the new tracks won't appear.
