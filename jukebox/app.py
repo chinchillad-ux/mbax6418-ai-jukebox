@@ -1060,6 +1060,7 @@ def build_app():
             )
 
             remove_song_btn = gr.Button("Remove from Library", variant="secondary")
+                        remove_status = gr.Markdown()
             gr.Markdown("Removes the selected library entry and stops this browser's previews/DJ set. "
                         "Audio and artwork files are kept. Demo songs can be loaded again.")
 
@@ -1419,7 +1420,7 @@ def build_app():
 
         remove_song_btn.click(
             fn=remove_and_refresh, inputs=[saved_song_dropdown, playlist_selector],
-            outputs=[edit_status, library_gallery, library_status, saved_song_dropdown,
+            outputs=[remove_status, library_gallery, library_status, saved_song_dropdown,
                      dj_song, playlist_selector, song_preview, library_audio, dj_audio,
                      playlist_audio, playlist_state, playlist_preview, dj_status,
                      playback_status, selected_song_status, song_title, cover_description,
