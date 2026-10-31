@@ -32,7 +32,7 @@ def test_custom_description_reaches_existing_flux_request(saved, monkeypatch, ti
     from jukebox.config import Settings
 
     image = BytesIO()
-    Image.new("RGB", (4, 4), "purple").save(image, "PNG")
+    Image.new("RGB", (1024, 1024), "purple").save(image, "PNG")
     settings = Settings("dummy-key", "http://example.test:9001/v1",
                         "http://example.test:9006/v1", "http://example.test:9007",
                         "http://example.test:9008", "qwen",

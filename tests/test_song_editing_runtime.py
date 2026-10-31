@@ -31,7 +31,7 @@ def test_running_app_rename_regenerate_failure_and_reload(tmp_path, monkeypatch)
     monkeypatch.setattr(cover, "load_settings", lambda: settings)
     requests = []
     image = BytesIO()
-    Image.new("RGB", (8, 8), "red").save(image, "PNG")
+    Image.new("RGB", (1024, 1024), "red").save(image, "PNG")
 
     def flux(req, **kwargs):
         payload = json.loads(req.data)
