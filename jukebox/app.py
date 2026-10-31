@@ -1059,6 +1059,8 @@ def build_app():
                 variant="secondary"
             )
 
+            retry_cover_status = gr.Markdown()
+
             remove_song_btn = gr.Button("Remove from Library", variant="secondary")
             remove_status = gr.Markdown()
             gr.Markdown("Removes the selected library entry and stops this browser's previews/DJ set. "
@@ -1186,7 +1188,7 @@ def build_app():
             ).then(
                 fn=show_cover_result,
                 inputs=[retry_cover_result, saved_song_dropdown],
-                outputs=[editor_cover, edit_status, saved_song_dropdown], queue=False
+                outputs=[editor_cover, retry_cover_status, saved_song_dropdown], queue=False
             ).then(
                 fn=load_library,
                 inputs=[],
