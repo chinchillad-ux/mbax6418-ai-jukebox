@@ -80,7 +80,10 @@ def create_song(style, mood, duration, vocal_mode):
     return (
         track.audio_path,
         track.cover_path,
-        f"✅ '{track.title}' and its cover were saved to your library!"
+        f"✅ '{track.title}' and its cover were saved to your library!" + (
+            "\n⚠️ Qwen could not generate a title. Your music is saved; rename it in My Library."
+            if track.title.startswith("Untitled Track ") else ""
+        )
     )
 
 
