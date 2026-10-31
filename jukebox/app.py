@@ -1074,6 +1074,7 @@ def build_app():
                 )
                 song_title = gr.Textbox(label="Song title", max_length=200)
                 rename_btn = gr.Button("Save Song Title")
+                rename_status = gr.Markdown()
                 editor_cover = gr.Image(label="Current album cover", type="filepath",
                                         interactive=False, height=240)
                 cover_description = gr.Textbox(
@@ -1413,7 +1414,7 @@ def build_app():
       
         rename_btn.click(
             fn=rename_and_refresh, inputs=[saved_song_dropdown, song_title],
-            outputs=[edit_status, library_gallery, saved_song_dropdown, dj_song,
+            outputs=[rename_status, library_gallery, saved_song_dropdown, dj_song,
                      playlist_selector, dj_audio, playlist_audio, playlist_state,
                      playlist_preview, dj_status, playback_status, selected_song_status]
         )
