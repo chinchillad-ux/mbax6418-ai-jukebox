@@ -364,6 +364,27 @@ def browse_library_song(evt: gr.SelectData):
 
 
 
+def library_cover_selection(track_id):
+    """Highlight the album tile matching the currently selected song.
+
+    The gallery shows only tracks with covers, so the selected index is the
+    position of the chosen track within that cover-bearing list.
+    """
+    try:
+        tracks = [
+            track for track in Library().list()
+            if track.cover_path
+        ]
+        if not track_id:
+            return gr.update(selected_index=None)
+        for index, track in enumerate(tracks):
+            if track.id == track_id:
+                return gr.update(selected_index=index)
+    except LibraryError:
+        pass
+    return gr.skip()
+
+
 def select_saved_song(track_id):
     """Play any saved song, even without album artwork."""
     try:
@@ -1125,6 +1146,9 @@ def build_app():
             saved_song_dropdown.change(
                 fn=load_song_editor, inputs=[saved_song_dropdown],
                 outputs=[song_title, cover_description, editor_cover]
+            ).then(
+                fn=library_cover_selection, inputs=[saved_song_dropdown],
+                outputs=[library_gallery]
             )
 
             
