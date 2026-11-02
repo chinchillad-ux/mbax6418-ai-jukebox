@@ -1174,11 +1174,6 @@ def build_app():
                 fn=load_library, inputs=[], outputs=[library_gallery, library_status]
             )
 
-
-                
-            
-
-            
             refresh_btn.click(
                 fn=load_library,
                 inputs=[],
@@ -1368,8 +1363,6 @@ def build_app():
                 playlist_preview = gr.Markdown(
                     "Your playlist is empty. Select songs above."
                 )
-
-
 
             refresh_dj_btn.click(
                 fn=refresh_dj_songs,
