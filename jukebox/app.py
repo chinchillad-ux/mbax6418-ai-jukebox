@@ -1075,6 +1075,7 @@ def build_app():
                     )
                     for track in Library().list()
                 ],
+                value=None,
                 label="Choose Any Saved Song",
                 info="Includes songs waiting for album artwork."
             )

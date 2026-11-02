@@ -393,3 +393,26 @@ def test_refresh_dj_songs_keeps_no_selection(tmp_path, monkeypatch):
     assert songs["choices"] == [("Later Song", "qa-f1b")]
     assert songs["value"] is None
 
+
+# --- Professor QA findings: F4 (library removal guard vs visible selection) --
+
+def test_library_dropdown_starts_unselected(tmp_path, monkeypatch):
+    """The library picker must not show a song that is not actually selected.
+
+    The remove guard refuses an empty selection for safety; the dropdown must
+    therefore render unselected instead of displaying the first saved song.
+    """
+    monkeypatch.chdir(tmp_path)
+    Library().add(
+        Track("qa-f4a", "Alpha Song", "Pop", "Happy", 30, False,
+              audio_path="alpha.mp3")
+    )
+    Library().add(
+        Track("qa-f4b", "Beta Song", "Rock", "Sad", 45, False,
+              audio_path="beta.mp3")
+    )
+    demo = app.build_app()
+    props = _dropdown_config(demo, label="Choose Any Saved Song")
+    assert props.get("value") is None
+    assert len(props["choices"]) == 2
+
