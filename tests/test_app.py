@@ -1,6 +1,8 @@
 
 """Tests for the Gradio application using mocked AI services."""
 
+import json
+import threading
 from unittest.mock import Mock
 
 from jukebox import app
@@ -578,4 +580,28 @@ def test_inflight_guard_releases_after_failure(tmp_path, monkeypatch):
         "Pop", "Happy", 30, "Vocals"
     )
     assert len(calls) == 2, "guard stayed locked after a failure"
+
+
+# --- Professor QA findings: F5 (manifest.json must not 404) -----------------
+
+def test_production_server_serves_manifest_json(tmp_path, monkeypatch):
+    """The browser requests /manifest.json on every load; it must not 404."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("GRADIO_ANALYTICS_ENABLED", "False")
+
+    demo, url, _ = app.launch_server(
+        server_name="127.0.0.1", prevent_thread_lock=True, quiet=True,
+        allowed_paths=[str(tmp_path)]
+    )
+    try:
+        import urllib.request
+        with urllib.request.urlopen(
+            f"{url.rstrip('/')}/manifest.json"
+        ) as response:
+            assert response.status == 200
+            manifest = json.loads(response.read())
+        assert manifest["name"] == "AI Jukebox"
+        assert manifest["display"] == "standalone"
+    finally:
+        demo.get_blocks().close()
 

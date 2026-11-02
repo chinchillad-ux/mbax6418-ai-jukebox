@@ -1617,5 +1617,15 @@ def build_app():
     return demo
 
 
+def launch_server(**kwargs):
+    """Start the production server with PWA manifest support.
+
+    Gradio's frontend requests /manifest.json on every page load; the
+    manifest endpoint only answers while PWA mode is enabled, so without
+    it every load logs a 404 in the console.
+    """
+    return build_app().launch(pwa=True, **kwargs)
+
+
 if __name__ == "__main__":
-    build_app().launch()
+    launch_server()
