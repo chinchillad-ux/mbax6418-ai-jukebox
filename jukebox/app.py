@@ -1015,22 +1015,6 @@ def build_app():
 
 
 
-            generate_btn.click(
-                fn=create_song,
-                inputs=[style, mood, duration, vocal_mode],
-                outputs=[song_preview, cover_preview, generation_status],
-                show_progress="full"
-            )
-            
-            retry_btn.click(
-                fn=create_song,
-                inputs=[style, mood, duration, vocal_mode],
-                outputs=[song_preview, cover_preview, generation_status],
-                show_progress="full"
-            )
-
-
-
         
         with gr.Tab("💿 My Library", elem_id="library-tab") as library_tab:
             gr.Markdown("## Your Music Collection")
@@ -1143,17 +1127,7 @@ def build_app():
                 
             
 
-          
-            demo_btn.click(
-                fn=import_demo_tracks,
-                inputs=[],
-                outputs=[library_gallery, library_status]
-            ).then(
-                fn=refresh_saved_song_choices,
-                inputs=[saved_song_dropdown],
-                outputs=[saved_song_dropdown]
-            )
-
+            
             refresh_btn.click(
                 fn=load_library,
                 inputs=[],
@@ -1451,8 +1425,39 @@ def build_app():
                 show_progress="full"
             )
 
+        # Cross-tab wiring that needs components from several tabs:
+        # a song created (or imported) this session must be DJ-able
+        # without manually refreshing the AI DJ picker first.
+        generate_btn.click(
+            fn=create_song,
+            inputs=[style, mood, duration, vocal_mode],
+            outputs=[song_preview, cover_preview, generation_status],
+            show_progress="full"
+        ).then(
+            fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
+        )
 
-      
+        retry_btn.click(
+            fn=create_song,
+            inputs=[style, mood, duration, vocal_mode],
+            outputs=[song_preview, cover_preview, generation_status],
+            show_progress="full"
+        ).then(
+            fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
+        )
+
+        demo_btn.click(
+            fn=import_demo_tracks,
+            inputs=[],
+            outputs=[library_gallery, library_status]
+        ).then(
+            fn=refresh_saved_song_choices,
+            inputs=[saved_song_dropdown],
+            outputs=[saved_song_dropdown]
+        ).then(
+            fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
+        )
+
         rename_btn.click(
             fn=rename_and_refresh, inputs=[saved_song_dropdown, song_title],
             outputs=[rename_status, library_gallery, saved_song_dropdown, dj_song,

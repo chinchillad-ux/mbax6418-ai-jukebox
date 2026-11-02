@@ -416,3 +416,96 @@ def test_library_dropdown_starts_unselected(tmp_path, monkeypatch):
     assert props.get("value") is None
     assert len(props["choices"]) == 2
 
+
+# --- Professor QA findings: F2 (new songs missing from AI DJ picker) --------
+
+def test_generated_song_appears_in_dj_refresh(tmp_path, monkeypatch):
+    """A song created this session is listed by the DJ picker refresh."""
+    monkeypatch.chdir(tmp_path)
+
+    def fake_generate_song(**kwargs):
+        return Track("qa-f2", "Fresh Song", "pop", "happy", 30, False,
+                     audio_path="fresh.mp3")
+
+    monkeypatch.setattr(app, "generate_song", fake_generate_song)
+    monkeypatch.setattr(app, "generate_cover", lambda track: track)
+
+    audio, _cover, message = app.create_song(
+        "Pop", "Happy", 30, "Instrumental"
+    )
+    assert audio == "fresh.mp3" and "saved" in message.lower()
+
+    songs, _playlist = app.refresh_dj_songs()
+    assert ("Fresh Song", "qa-f2") in songs["choices"]
+
+
+def _component_config(config, elem_id=None, label=None):
+    for component in config["components"]:
+        props = component.get("props", {})
+        if elem_id and props.get("elem_id") == elem_id:
+            return component
+        if label and props.get("label") == label:
+            return component
+    raise AssertionError(f"component {elem_id or label} not found in app config")
+
+
+def test_create_and_retry_refresh_the_dj_picker(tmp_path, monkeypatch):
+    """After every generation attempt the DJ picker choices are refreshed.
+
+    A song generated mid-session must be DJ-able without clicking
+    Refresh Available Songs first.
+    """
+    monkeypatch.chdir(tmp_path)
+    Library().add(
+        Track("seed-1", "Seed Song", "Pop", "Happy", 30, False,
+              audio_path="seed.mp3")
+    )
+    config = app.build_app().get_config_file()
+    dj_song_id = _component_config(
+        config, elem_id="dj-song-picker"
+    )["id"]
+    playlist_id = _component_config(
+        config, label="Choose Your Playlist Songs"
+    )["id"]
+
+    by_index = config["dependencies"]
+    for api_name in ("create_song", "create_song_1"):
+        start = next(
+            i for i, dep in enumerate(by_index)
+            if dep.get("api_name") == api_name
+        )
+        follow_up = by_index[start + 1]
+        assert follow_up["targets"] == [(None, "then")], (
+            f"{api_name} has no chained follow-up event"
+        )
+        assert dj_song_id in follow_up["outputs"], (
+            f"{api_name} does not refresh the DJ song picker"
+        )
+        assert playlist_id in follow_up["outputs"], (
+            f"{api_name} does not refresh the DJ playlist picker"
+        )
+
+
+def test_demo_import_refreshes_the_dj_picker(tmp_path, monkeypatch):
+    """Loading the demo songs also refreshes the AI DJ song choices."""
+    monkeypatch.chdir(tmp_path)
+    config = app.build_app().get_config_file()
+    dj_song_id = _component_config(
+        config, elem_id="dj-song-picker"
+    )["id"]
+    playlist_id = _component_config(
+        config, label="Choose Your Playlist Songs"
+    )["id"]
+    demo_start = next(
+        i for i, dep in enumerate(config["dependencies"])
+        if dep.get("api_name") == "import_demo_tracks"
+    )
+    follow_ups = [
+        dep for dep in config["dependencies"][demo_start + 1:]
+        if dep["targets"] == [(None, "then")]
+    ]
+    assert any(
+        dj_song_id in dep["outputs"] and playlist_id in dep["outputs"]
+        for dep in follow_ups
+    ), "importing demo songs does not refresh the DJ picker"
+
