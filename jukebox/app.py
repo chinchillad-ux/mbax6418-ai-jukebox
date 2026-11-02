@@ -2,6 +2,7 @@
 import gradio as gr
 
 import json
+import threading
 from jukebox.models import Track
 
 import ipaddress
@@ -24,7 +25,26 @@ from jukebox.library import Library, LibraryError
 from jukebox.dj import commentary_for_track, speak, DJError
 
 
+# One song generation at a time: a second Generate/Retry click while a
+# generation is in flight must not spawn a duplicate service pipeline.
+_generation_lock = threading.Lock()
+
+
 def create_song(style, mood, duration, vocal_mode):
+    """Generate a song and matching album cover."""
+    if not _generation_lock.acquire(blocking=False):
+        return (
+            None, None,
+            "⚠️ A song generation is already in progress. "
+            "Please wait for it to finish."
+        )
+    try:
+        return _create_song(style, mood, duration, vocal_mode)
+    finally:
+        _generation_lock.release()
+
+
+def _create_song(style, mood, duration, vocal_mode):
     """Generate a song and matching album cover."""
     try:
         track = generate_song(

@@ -509,3 +509,73 @@ def test_demo_import_refreshes_the_dj_picker(tmp_path, monkeypatch):
         for dep in follow_ups
     ), "importing demo songs does not refresh the DJ picker"
 
+
+# --- Professor QA findings: F3 (no duplicate generation while in flight) -----
+
+import threading
+
+
+def test_second_generation_refused_while_in_flight(tmp_path, monkeypatch):
+    """A Generate/Retry click during a running generation is blocked."""
+    monkeypatch.chdir(tmp_path)
+    started = threading.Event()
+    release = threading.Event()
+    calls = []
+
+    def blocking_generate(**kwargs):
+        calls.append(1)
+        started.set()
+        assert release.wait(5)
+        return Track("qa-f3", "In Flight Song", "pop", "happy", 30, False,
+                     audio_path="in-flight.mp3")
+
+    monkeypatch.setattr(app, "generate_song", blocking_generate)
+    monkeypatch.setattr(app, "generate_cover", lambda track: track)
+
+    outcomes = {}
+
+    def run_first():
+        outcomes["first"] = app.create_song(
+            "Pop", "Happy", 30, "Instrumental"
+        )
+
+    thread = threading.Thread(target=run_first)
+    thread.start()
+    try:
+        assert started.wait(5), "first generation did not start"
+
+        audio, cover, message = app.create_song(
+            "Pop", "Happy", 30, "Instrumental"
+        )
+        assert audio is None and cover is None
+        assert "already" in message.lower()
+        assert len(calls) == 1, "a duplicate pipeline was spawned"
+    finally:
+        release.set()
+        thread.join(5)
+
+    assert not thread.is_alive()
+    assert outcomes["first"][2].startswith("✅")
+
+
+def test_inflight_guard_releases_after_failure(tmp_path, monkeypatch):
+    """A failed generation must not leave the next attempt blocked."""
+    monkeypatch.chdir(tmp_path)
+    calls = []
+
+    def failing_generate(**kwargs):
+        calls.append(1)
+        raise app.SongGenerationError("Music service unavailable")
+
+    monkeypatch.setattr(app, "generate_song", failing_generate)
+
+    _audio, _cover, message = app.create_song(
+        "Pop", "Happy", 30, "Vocals"
+    )
+    assert "Music service unavailable" in message
+
+    _audio, _cover, message = app.create_song(
+        "Pop", "Happy", 30, "Vocals"
+    )
+    assert len(calls) == 2, "guard stayed locked after a failure"
+
