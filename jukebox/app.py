@@ -225,6 +225,8 @@ def remove_and_refresh(track_id, playlist_ids):
     """
     unchanged = lambda message: (message, *(gr.skip() for _ in range(17)))
     if not track_id:
+        if not Library().list():
+            return unchanged("📭 No saved songs in your library yet. Generate a song, or click Load 3 Demo Songs.")
         return unchanged("⚠️ Select a saved song to remove.")
     try:
         removed = Library().remove(track_id)
@@ -303,6 +305,9 @@ def load_library():
             if track.cover_path
         ]
 
+        if not tracks:
+            return [], "📭 No saved songs in your library yet. Generate a song above, or click Load 3 Demo Songs to add the bundled samples."
+
         return covers, f"💿 You have {len(tracks)} saved song(s)."
 
     except LibraryError as error:
@@ -365,6 +370,8 @@ def select_saved_song(track_id):
         track = Library().get(track_id) if track_id else None
 
         if track is None:
+            if not Library().list():
+                return None, "📭 No saved songs in your library yet. Generate a song, or click Load 3 Demo Songs."
             return None, "⚠️ Please select a saved song."
 
         if not track.audio_path:
