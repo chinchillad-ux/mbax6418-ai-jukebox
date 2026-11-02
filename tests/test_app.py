@@ -1,6 +1,8 @@
 
 """Tests for the Gradio application using mocked AI services."""
 
+from unittest.mock import Mock
+
 from jukebox import app
 from jukebox.library import Library
 from jukebox.models import Track
@@ -334,4 +336,60 @@ def test_retry_cover_keeps_original_song(
     assert saved.audio_path == "original-song.mp3"
     assert saved.cover_path == "recovered-cover.png"
     assert len(Library().list()) == 1
+
+
+# --- Professor QA findings: F1 (AI DJ picker must not auto-select) ---------
+
+def test_dj_intro_requires_selected_song(tmp_path, monkeypatch):
+    """Generating an intro without a chosen song is refused before any service call."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        app, "commentary_for_track",
+        Mock(side_effect=AssertionError("No commentary without a selection")),
+    )
+    monkeypatch.setattr(
+        app, "speak",
+        Mock(side_effect=AssertionError("No speech without a selection")),
+    )
+    audio, message = app.generate_dj_intro(
+        None, "Default Voice", None, ""
+    )
+    assert audio is None
+    assert "Please select a song first" in message
+
+
+def _dropdown_config(demo, elem_id=None, label=None):
+    config = demo.get_config_file()
+    for component in config["components"]:
+        props = component.get("props", {})
+        if elem_id and props.get("elem_id") == elem_id:
+            return props
+        if label and props.get("label") == label:
+            return props
+    raise AssertionError(f"dropdown {elem_id or label} not found in app config")
+
+
+def test_dj_song_dropdown_starts_unselected(tmp_path, monkeypatch):
+    """A non-empty DJ picker must render with NO song selected at build time."""
+    monkeypatch.chdir(tmp_path)
+    Library().add(
+        Track("qa-f1", "First Song", "Pop", "Happy", 30, False,
+              audio_path="first.mp3")
+    )
+    demo = app.build_app()
+    props = _dropdown_config(demo, elem_id="dj-song-picker")
+    assert props.get("value") is None  # omitted when None: behave as unselected
+    assert props["choices"]  # the guard is reachable only when choices exist
+
+
+def test_refresh_dj_songs_keeps_no_selection(tmp_path, monkeypatch):
+    """Refreshing the DJ picker must not re-select a song, even with choices."""
+    monkeypatch.chdir(tmp_path)
+    Library().add(
+        Track("qa-f1b", "Later Song", "Rock", "Sad", 45, False,
+              audio_path="later.mp3")
+    )
+    songs, _playlist = app.refresh_dj_songs()
+    assert songs["choices"] == [("Later Song", "qa-f1b")]
+    assert songs["value"] is None
 

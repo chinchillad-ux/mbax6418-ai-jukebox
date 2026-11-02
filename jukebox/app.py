@@ -1258,6 +1258,7 @@ def build_app():
                         (track.title, track.id)
                         for track in Library().list()
                     ],
+                    value=None,
                     label="Choose a Song",
                     show_label=False,
                     container=False,
