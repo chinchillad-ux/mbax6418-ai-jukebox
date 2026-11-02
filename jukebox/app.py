@@ -721,7 +721,7 @@ def skip_dj_track(state):
 
 
 
-def refresh_dj_songs():
+def refresh_dj_songs(selected_id=None, playlist_ids=None):
     """Refresh available songs and playable playlist tracks."""
     try:
         tracks = Library().list()
@@ -738,8 +738,11 @@ def refresh_dj_songs():
         ]
 
         return (
-            gr.update(choices=song_choices, value=None),
-            gr.update(choices=playlist_choices, value=[])
+            gr.update(choices=song_choices,
+                      value=selected_id if selected_id in {value for _, value in song_choices} else None),
+            gr.update(choices=playlist_choices,
+                      value=[track_id for track_id in (playlist_ids or [])
+                             if track_id in {value for _, value in playlist_choices}])
         )
 
     except LibraryError:
@@ -1236,7 +1239,7 @@ def build_app():
 
 
         
-        with gr.Tab("🎙️ AI DJ", elem_id="ai-dj-tab"):
+        with gr.Tab("🎙️ AI DJ", elem_id="ai-dj-tab") as dj_tab:
             gr.Markdown("## 🎙️ Meet Your AI DJ")
             gr.Markdown(
                 "Choose a song and let your AI DJ introduce it!"
@@ -1346,7 +1349,19 @@ def build_app():
 
             refresh_dj_btn.click(
                 fn=refresh_dj_songs,
-                inputs=[],
+                inputs=[dj_song, playlist_selector],
+                outputs=[dj_song, playlist_selector]
+            )
+
+            dj_tab.select(
+                fn=refresh_dj_songs,
+                inputs=[dj_song, playlist_selector],
+                outputs=[dj_song, playlist_selector]
+            )
+
+            demo.load(
+                fn=refresh_dj_songs,
+                inputs=[dj_song, playlist_selector],
                 outputs=[dj_song, playlist_selector]
             )
 
