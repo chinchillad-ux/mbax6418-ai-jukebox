@@ -63,6 +63,16 @@ New media and `data/library.json` are saved under ignored `data/`. Keep these ru
 
 ## Using the app
 
+The merged app includes:
+
+- Instrumental and vocal song generation, original Qwen lyrics and titles, and matching FLUX artwork with exact local title overlays (PRs #18 and #21).
+- A persistent library with demo imports, title editing, cover regeneration and artwork-only retry, plus song removal that retains media files (PRs #16 and #19).
+- The midnight-studio theme and playback/feedback improvements from PR #22.
+- Default and MP3/WAV-reference DJ speech, automatic speech-to-song sequencing, pause/resume, skip, and coordination between audio players.
+- Automatic AI DJ list refresh after library changes (PR #23), an initially empty song picker, concurrent-generation rejection and recovery, cleared highlights for coverless songs, and clearer empty-library guidance (PR #24).
+
+The application baseline above includes these merged changes. The later `2a56a03` main-branch update and this PR update documentation and verification records; they do not add application features.
+
 ### Generate a song and its cover
 
 1. In **Create a Song**, choose **Musical Style**, **Mood**, **Song Duration (seconds)**, and **Song Type**. Duration ranges from **30–180 seconds in 15-second steps**; defaults are Pop / Happy / 60 seconds / Vocals.
@@ -260,7 +270,7 @@ Package the generated samples, not third-party music, lyrics, art, or voice samp
 - [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. The full three-song auto-advancing sequence (intro → song ×3) was also verified in an isolated headless browser; see the multi-song playback evidence.
 - [x] Review and package the screenshots and SVG: three historical workflow screenshots and the architecture SVG are tracked in the repository and referenced above.
 - [x] The `9dc926d` GitHub ZIP was checked for required source, dependencies, configuration examples and bundled sample media, with no `.env`, runtime data or virtual environment. Recheck the matching ZIP after this documentation merge; do not rezip a configured working folder.
-- [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Fisher approved documentation commit `4df1edc`; Brandon approved the final fixes. Request Fisher's confirmation of the post-approval documentation edits before final merge if the README changes again.
+- [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Fisher approved documentation commit `4df1edc`; Brandon approved the final fixes. Have a teammate other than the author review the final documentation changes before merge. Fisher reviewed the earlier documentation; Brandon can confirm the wording of his findings, but he authored PR #25 and cannot formally approve that PR himself.
 - [ ] After documentation review and final verification, submit one shared repository link, exact commit ID, and the **GitHub-downloaded ZIP for that same version** on Canvas. Nothing has been submitted by this documentation edit.
 
 Issue #7 says “fresh clone,” but the assignment specifically requires an extracted GitHub ZIP. A clone or local archive does not substitute. If fixes change the submission commit, download the matching ZIP and recheck affected setup/features.
