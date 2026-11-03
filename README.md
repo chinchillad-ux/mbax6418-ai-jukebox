@@ -2,7 +2,7 @@
 
 MBAX 6418 Assignment 3. Create instrumental or vocal songs, generate matching covers, and play a collection with song-specific spoken DJ introductions using the class services.
 
-The November 2, 2026 Windows verification used the final GitHub ZIP identified by `9dc926dccda13d4f75eedd9d8dda18fa37e252a5`. Its automated suite passed **263 tests**. Brandon confirmed personal listening and the team's review of the documentation against the finished app. The verification findings below distinguish those confirmations, earlier live feature checks, and the final extracted-ZIP checks. Fisher's earlier independent macOS ZIP test remains recorded separately.
+This README documents the app at merged source `9dc926dccda13d4f75eedd9d8dda18fa37e252a5`, the application baseline for final verification. It covers the endpoint configuration, song editor, auto-generated song titles, cover-title overlays, library management, and the fixes from the final QA pass (empty AI DJ picker, in-flight generation guard, gallery highlight, empty-library guidance). The automated suite passes **263 tests with 41 warnings** on this version. Fisher completed an independent GitHub-ZIP installation and technical feature checks on the earlier `9975855` version; Brandon independently reviewed and approved the final fixes at `2aff2a9`. Human listening and full-sequence playback were also completed (see [final verification](results/verification.md#final-pre-submission-verification-recorded-october-27---november-3-2026)); Brandon's Windows ZIP verification of this application baseline is recorded in [final Windows verification](results/final-verification.md). A new documentation merge requires a matching submission ZIP. See the submission checklist.
 
 ## Setup
 
@@ -108,18 +108,18 @@ intentional; the assignment's session retention is a minimum requirement.
 
 ### Generate DJ speech and play a set
 
-1. Open **AI DJ**, then **Choose a Song**. Available songs refresh when the page loads or you enter the tab. **Refresh Available Songs** also reloads the lists while preserving valid selections.
+1. Open **AI DJ**, then **Choose a Song** — the picker starts empty, so select a song before generating. Available songs refresh when the page loads or you enter the tab; songs generated this session are added automatically. **Refresh Available Songs** also reloads the lists while preserving valid selections.
 2. Use **Default Voice** without an upload, or choose **Custom Voice** and upload an MP3 or WAV you own or have permission to use. The optional URL field accepts a direct public HTTPS MP3/WAV; uploads take precedence. URL downloads reject redirects, nonpublic addresses, nonstandard HTTPS ports, and files above 10 MB.
 3. Click **Generate DJ Introduction**. Qwen writes song-specific commentary and Chatterbox generates speech. Listen in the preview. For missing input or service errors, correct the problem and retry.
 4. Click **Refresh Available Songs** again after generating an introduction, then select **Choose Your Playlist Songs**. Only songs with music and DJ audio paths appear; starting the set checks that their files exist.
 5. Check **Your DJ Set** and press **Start DJ Set**. The queue is designed to play introduction → song → next introduction → next song automatically.
 6. Use the playlist audio control to pause/resume. **Skip to Next Song** skips the entire current track, including remaining introduction or music; skipping the last track ends the set.
 
-Starting any of the four audio players pauses the others without clearing their files. November 2 browser checks recorded a complete two-song sequence, pause/resume, skip, and one active audio element during inspected playback. Brandon subsequently confirmed personal listening. These observations do not constitute a separate voice-likeness assessment. If autoplay is blocked in another browser, try the play control and record what happens.
+Starting any of the four audio players pauses the others without clearing their files. Recorded browser checks cover switching, skip cases, and the full three-song auto-advancing sequence (see [final verification](results/verification.md#final-pre-submission-verification-recorded-october-27---november-3-2026)). If autoplay is blocked, try the play control and record what happens.
 
 ## Interface screenshots
 
-These October 27, 2026 captures show the documented app in isolated Chrome using bundled samples. The generation and library captures show the interface without starting playback. The DJ capture shows actual bundled speech playing after **Start DJ Set** was clicked; browser timing and audio-source checks are recorded in [playback verification](results/verification.md#bundled-dj-speech-playback-capture-issue-7-pr-17). No fresh AI generation or human listening test was performed.
+These October 27, 2026 captures show the documented app in isolated Chrome using bundled samples. The generation and library captures show the interface without starting playback. The DJ capture shows actual bundled speech playing after **Start DJ Set** was clicked; browser timing and audio-source checks are recorded in [playback verification](results/verification.md#bundled-dj-speech-playback-capture-issue-7-pr-17). No fresh AI generation was performed for the screenshots.
 
 ![Song-generation controls](screenshots/song-generation.png)
 
@@ -135,7 +135,7 @@ AI DJ with all three sample tracks queued and **Now introducing: Copper Sunrise*
 
 ## Architecture
 
-![AI Jukebox architecture at merged source 47bf55a](jukebox-architecture.svg)
+![AI Jukebox architecture at merged source 9dc926d](jukebox-architecture.svg)
 
 Gradio events call `app.py`, which coordinates the music, cover, DJ, and library modules. Credentials stay on the Python server. Local JSON records hold track metadata and paths to generated or bundled media.
 
@@ -161,7 +161,7 @@ The table separates historical live-service checks from automated tests with moc
 
 ### Independent teammate ZIP test
 
-Fisher downloaded commit `9975855a8c41480edfbd7dc93d7dac5db09f25b2` from GitHub and installed it in a clean extracted folder on macOS, without reusing a clone or virtual environment. His report in [results/verification.md](results/verification.md#independent-github-zip-verification-issue-7-pr-17) records **204 tests passed, 17 warnings** and these results:
+On October 27, 2026, Fisher downloaded commit `9975855a8c41480edfbd7dc93d7dac5db09f25b2` from GitHub and installed it in a clean extracted folder on macOS, without reusing a clone or virtual environment. That was the documentation-merge candidate at the time; his report in [results/verification.md](results/verification.md#independent-github-zip-verification-issue-7-pr-17) records **204 tests passed, 17 warnings** for that version and these results:
 
 | Inputs / action | Expected | Reported result |
 |---|---|---|
@@ -170,7 +170,7 @@ Fisher downloaded commit `9975855a8c41480edfbd7dc93d7dac5db09f25b2` from GitHub 
 | Default DJ, then custom voice using generated DJ MP3 as reference | Saved speech for the selected track | Both outputs decoded; durations 13.48 and 12.80 seconds; brief playback starts verified |
 | One-item Copper Sunrise set; pause/resume, skip and restart | Controls work; introduction advances to music | Browser showed automatic speech-to-song transition, working controls and one unpaused audio element |
 
-No application fixes were needed. The setup issue was missing FFmpeg/ffprobe, which were installed. These are technical checks: Fisher did not listen to the generated audio or assess voice likeness. The report does not establish WAV-reference testing, a full multi-song sequence, or independent coverage of every slow-request editing scenario. Those checks remain separate from the completed ZIP installation.
+No application fixes were needed. The setup issue was missing FFmpeg/ffprobe, which were installed. These are technical checks: Fisher did not listen to the generated audio or assess voice likeness. His report does not cover WAV-reference testing or a full multi-song sequence; both were completed separately by the project owner and are recorded in the [final verification](results/verification.md#final-pre-submission-verification-recorded-october-27---november-3-2026).
 
 ### Song editor checks
 
@@ -192,20 +192,20 @@ uv sync --frozen --extra dev
 uv run --frozen pytest -q
 ```
 
-On October 27, 2026, the exact documented source was checked in an isolated local export and tested with cached dependencies:
+On November 2-3, 2026, the merged source (`9dc926d`) was checked in an isolated local export and tested with cached dependencies:
 
 ```sh
-uv sync --offline --frozen --extra dev
-GRADIO_ANALYTICS_ENABLED=False uv run --offline --frozen pytest -q
+uv sync --frozen --extra dev
+GRADIO_ANALYTICS_ENABLED=False uv run --frozen pytest -q
 ```
 
-Historical October 27 result:
+Latest local result:
 
 ```text
-204 passed, 17 warnings
+263 passed, 41 warnings
 ```
 
-Warnings concern Gradio theme/CSS arguments and an upstream HTTP 422 constant. No tests were ignored and no live AI calls were made. This includes a real local HTTP app test with mocked service transport, but not a new Chrome run or listening check. A local export is not the required teammate installation from a GitHub-downloaded ZIP.
+Warnings concern Gradio theme/CSS arguments and an upstream HTTP 422 constant; no tests were ignored and no live AI calls were made. The suite includes real local HTTP app tests with mocked service transport, plus the in-flight generation guard regression tests that exercised concurrent requests over HTTP. A local export is not a substitute for the required teammate installation from a GitHub-downloaded ZIP.
 
 The final extracted Windows copy was tested on November 2 using its own freshly installed environment: **263 passed, 42 warnings in 66.20 seconds**. Most warnings were dependency deprecations; one server-test warning was a port collision with the concurrently running app. Repeating that manifest test on a separate port passed (1 passed, 2 deprecation warnings). The automated suite makes no live AI calls. See [the final verification findings](results/final-verification.md) for scope and the separate live checks.
 
@@ -227,7 +227,7 @@ Saving music even when the cover request fails gives the user a usable partial r
 
 ### Test playback at the browser boundary
 
-Separate audio widgets created a possible overlap problem. Handlers now pause the other three players, and the recorded browser checks report successful switching and skip behavior. The lesson is that controller tests alone cannot prove browser behavior: the standalone `Player` is not the UI player. November 2 browser checks added a complete two-song sequence, pause/resume, skip and inspected non-overlap; Brandon confirmed personal listening afterward. The older standalone “skip while paused remains paused” test still provides a narrower guarantee than the observed browser skip result, and another browser may apply different autoplay restrictions.
+Separate audio widgets created a possible overlap problem. Handlers now pause the other three players, and the recorded browser checks report successful switching and skip behavior. The lesson is that controller tests alone cannot prove browser behavior: the standalone `Player` is not the UI player. Its “skip while paused remains paused” test is stronger than the browser report's “advanced as expected.” November 2 browser checks recorded a complete two-song sequence, pause/resume, skip and inspected non-overlap; Brandon confirmed personal listening. The separate three-demo sequence is recorded in `results/verification.md`. Another browser may apply different autoplay restrictions.
 
 ### Separate image generation from exact lettering
 
@@ -251,16 +251,16 @@ Package the generated samples, not third-party music, lyrics, art, or voice samp
 
 ## Before submission
 
-- [ ] Complete deferred independent teammate review of song editing, including selection changes during slow regeneration/retry, draft preservation, rename/DJ invalidation, and reload persistence.
-- [x] Brandon confirmed team review of the documentation against the finished app; findings and corrections are explained above and in `results/final-verification.md`.
-- [ ] Confirm the original starter prompt was retained and any additions were made before building; the verification runs do not establish that process history.
-- [x] Fisher installed and technically tested the GitHub ZIP for `9975855a8c41480edfbd7dc93d7dac5db09f25b2` in a clean folder; environment, setup friction and results are recorded in `results/verification.md`. Download the final submission commit's matching ZIP and recheck any affected setup/features if it changes.
-- [x] Record technical ZIP checks for new instrumental/vocal songs, covers, library edits, default DJ, MP3-reference DJ, and one-item playlist controls/transition.
-- [x] Record Brandon's confirmation of personal listening and the completed browser two-song sequence, pause/resume, skip and inspected non-overlap. November 2 live checks also accepted MP3 and WAV references. Voice likeness was not separately assessed; a deliberate live outage was not required.
-- [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. Brandon's later listening confirmation is recorded in the final verification findings; Fisher's historical ZIP test remains separate.
-- [ ] Review and package the screenshots and SVG at their relative paths alongside the final `README.md`.
-- [x] Checked the GitHub-downloaded ZIP for `9dc926d`: code, dependency/configuration files, documentation and bundled sample media were present; no `.env`, runtime data, or virtual environment was included. Recheck a new matching ZIP after merging this documentation update; do not rezip a configured working folder.
-- [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Fisher approved documentation commit `4df1edc`; request confirmation of subsequent documentation changes before merge.
+- [x] Independent teammate review of song editing completed: Brandon (BAAndrewsDev) reviewed PR #24 at `2aff2a9` and approved, including selection changes during slow regeneration, draft preservation, coverless-song highlight clearing, and the in-flight generation guard (with an HTTP regression test).
+- [x] Brandon confirmed team review of the documentation against the finished app; findings are recorded above and in `results/final-verification.md`.
+- [ ] Confirm the original starter prompt was retained and any additions were made before building; verification runs do not establish that process history.
+- [x] Fisher installed and technically tested the GitHub ZIP for `9975855a8c41480edfbd7dc93d7dac5db09f25b2` in a clean folder; environment, setup friction and results are recorded in `results/verification.md`. Brandon's Windows installation and technical checks of the `9dc926d` ZIP are recorded in `results/final-verification.md`. Download the matching ZIP after this documentation merge.
+- [x] Record technical ZIP checks for new instrumental/vocal songs, covers, library edits, default DJ, MP3-reference DJ, and one-item playlist controls/transition (Fisher's report, `results/verification.md`).
+- [x] Human listening and a full multi-song sequence were completed by the project owner on the merged app (three-demo set, generated-song DJ intro, default and WAV custom voices, pause/resume/skip). WAV-reference behavior was verified live by the owner; a deliberate live outage is not required since simulated failure/recovery tests cover the failure case. Brandon also confirmed personal listening; his report distinguishes earlier live checks from final-ZIP checks and does not claim a voice-likeness assessment.
+- [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. The full three-song auto-advancing sequence (intro → song ×3) was also verified in an isolated headless browser; see the multi-song playback evidence.
+- [x] Review and package the screenshots and SVG: three current-interface screenshots and the architecture SVG are tracked in the repository and referenced above.
+- [x] The `9dc926d` GitHub ZIP was checked for required source, dependencies, configuration examples and bundled sample media, with no `.env`, runtime data or virtual environment. Recheck the matching ZIP after this documentation merge; do not rezip a configured working folder.
+- [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Fisher approved documentation commit `4df1edc`; Brandon approved the final fixes. Request Fisher's confirmation of the post-approval documentation edits before final merge if the README changes again.
 - [ ] After documentation review and final verification, submit one shared repository link, exact commit ID, and the **GitHub-downloaded ZIP for that same version** on Canvas. Nothing has been submitted by this documentation edit.
 
 Issue #7 says “fresh clone,” but the assignment specifically requires an extracted GitHub ZIP. A clone or local archive does not substitute. If fixes change the submission commit, download the matching ZIP and recheck affected setup/features.
