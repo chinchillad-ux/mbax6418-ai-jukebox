@@ -2,7 +2,7 @@
 
 MBAX 6418 Assignment 3. Create instrumental or vocal songs, generate matching covers, and play a collection with song-specific spoken DJ introductions using the class services.
 
-This documentation draft describes merged source `47bf55a8ec10498b3a4534e86d9461a68ae271b1`, including the endpoint correction and song editor. The automated suite passes **204 tests with 17 warnings**. Fisher completed an independent GitHub-ZIP installation and technical feature checks, and approved the documentation at `4df1edc`. Human listening and a complete multi-song playback check remain open; see the submission checklist.
+The November 2, 2026 Windows verification used the final GitHub ZIP identified by `9dc926dccda13d4f75eedd9d8dda18fa37e252a5`. Its automated suite passed **263 tests**. Brandon confirmed personal listening and the team's review of the documentation against the finished app. The verification findings below distinguish those confirmations, earlier live feature checks, and the final extracted-ZIP checks. Fisher's earlier independent macOS ZIP test remains recorded separately.
 
 ## Setup
 
@@ -24,7 +24,7 @@ uv run --frozen python --version
 
 `pyproject.toml` requires `python-dotenv>=1.0`, `Pillow>=10.1`, and `gradio>=5.0,<6.0`; tests add `pytest>=8.0` and `pytest-timeout>=2.3`. The build backend requires `setuptools>=68`. `--frozen` uses the supplied `uv.lock` without updating it. The tested environment used Python 3.11.16 and Gradio 5.50.0 on macOS.
 
-Keep the extracted directory together and run commands from its root, not inside `jukebox/`, because media paths are relative to the root. Git is not needed to run the ZIP. Fisher completed the ZIP setup on macOS with Python 3.12.13. FFmpeg and ffprobe were initially missing and had to be installed before the audio checks. Confirm both version commands above succeed before proceeding. Windows setup has not been verified.
+Keep the extracted directory together and run commands from its root, not inside `jukebox/`, because media paths are relative to the root. Git is not needed to run the ZIP. Fisher completed the ZIP setup on macOS with Python 3.12.13. FFmpeg and ffprobe were initially missing and had to be installed before the audio checks. Confirm both version commands above succeed before proceeding. Windows setup was verified on November 2 with Python 3.11.16, uv 0.12.5, and FFmpeg/ffprobe 9.0. In a OneDrive folder, uv's hardlinks failed; use `uv sync --frozen --extra dev --link-mode copy`. Installation took several minutes.
 
 ### Endpoint configuration
 
@@ -115,7 +115,7 @@ intentional; the assignment's session retention is a minimum requirement.
 5. Check **Your DJ Set** and press **Start DJ Set**. The queue is designed to play introduction → song → next introduction → next song automatically.
 6. Use the playlist audio control to pause/resume. **Skip to Next Song** skips the entire current track, including remaining introduction or music; skipping the last track ends the set.
 
-Starting any of the four audio players pauses the others without clearing their files. Recorded browser checks cover switching and skip cases; final-version audible progression and autoplay checks remain open. If autoplay is blocked, try the play control and record what happens.
+Starting any of the four audio players pauses the others without clearing their files. November 2 browser checks recorded a complete two-song sequence, pause/resume, skip, and one active audio element during inspected playback. Brandon subsequently confirmed personal listening. These observations do not constitute a separate voice-likeness assessment. If autoplay is blocked in another browser, try the play control and record what happens.
 
 ## Interface screenshots
 
@@ -199,13 +199,25 @@ uv sync --offline --frozen --extra dev
 GRADIO_ANALYTICS_ENABLED=False uv run --offline --frozen pytest -q
 ```
 
-Latest local result:
+Historical October 27 result:
 
 ```text
 204 passed, 17 warnings
 ```
 
 Warnings concern Gradio theme/CSS arguments and an upstream HTTP 422 constant. No tests were ignored and no live AI calls were made. This includes a real local HTTP app test with mocked service transport, but not a new Chrome run or listening check. A local export is not the required teammate installation from a GitHub-downloaded ZIP.
+
+The final extracted Windows copy was tested on November 2 using its own freshly installed environment: **263 passed, 42 warnings in 66.20 seconds**. Most warnings were dependency deprecations; one server-test warning was a port collision with the concurrently running app. Repeating that manifest test on a separate port passed (1 passed, 2 deprecation warnings). The automated suite makes no live AI calls. See [the final verification findings](results/final-verification.md) for scope and the separate live checks.
+
+## Team documentation verification and findings
+
+Brandon confirmed that he listened to the songs and DJ playback and that the team reviewed the documentation against the finished app. The technical checks were performed with Codex assistance. The findings from that review are summarized here; detailed inputs, results, and limitations are in [the verification record](results/final-verification.md).
+
+The documented installation and core workflows worked, with one Windows setup correction: uv could not use hardlinks in OneDrive, so installation required `--link-mode copy`. FFmpeg and ffprobe remained separate prerequisites. A fresh environment in the final extracted folder installed successfully, all 263 tests passed, and the app launched using the class settings supplied through a local `.env`.
+
+Earlier November 2 live checks generated a 30-second instrumental and a 45-second vocal-mode song with saved AI lyrics, distinct FLUX covers, and persistent library records. Default DJ speech and MP3/WAV-reference speech generated successfully. Browser checks recorded introduction → song → next introduction → next song, working pause/resume and skip, and completion of the set. These full live checks preceded the final ZIP; the final ZIP separately passed installation/regression checks, loaded the three bundled songs, refreshed the DJ dropdown automatically, and generated a new default-voice introduction for Rain on Glass.
+
+The final review found that some README claims had become stale: the latest test count was still 204, Windows setup was described as unverified, and completed checks remained marked pending. This update corrects those statements. Testing also exposed a stale DJ song list and an ineffective duplicate-generation guard; PRs #23 and #24 addressed them, including HTTP checks of concurrent generation rejection and recovery. The separate custom-voice tests establish accepted input and valid generated speech; they do not establish how closely the output resembles a particular person's voice. Individual contribution/review records and instructor access remain team submission responsibilities.
 
 ## Design judgment and lessons
 
@@ -215,7 +227,7 @@ Saving music even when the cover request fails gives the user a usable partial r
 
 ### Test playback at the browser boundary
 
-Separate audio widgets created a possible overlap problem. Handlers now pause the other three players, and the recorded browser checks report successful switching and skip behavior. The lesson is that controller tests alone cannot prove browser behavior: the standalone `Player` is not the UI player. Its “skip while paused remains paused” test is stronger than the browser report's “advanced as expected.” Full audible queue progression, pause/resume, and autoplay still need final-version checks.
+Separate audio widgets created a possible overlap problem. Handlers now pause the other three players, and the recorded browser checks report successful switching and skip behavior. The lesson is that controller tests alone cannot prove browser behavior: the standalone `Player` is not the UI player. November 2 browser checks added a complete two-song sequence, pause/resume, skip and inspected non-overlap; Brandon confirmed personal listening afterward. The older standalone “skip while paused remains paused” test still provides a narrower guarantee than the observed browser skip result, and another browser may apply different autoplay restrictions.
 
 ### Separate image generation from exact lettering
 
@@ -240,13 +252,14 @@ Package the generated samples, not third-party music, lyrics, art, or voice samp
 ## Before submission
 
 - [ ] Complete deferred independent teammate review of song editing, including selection changes during slow regeneration/retry, draft preservation, rename/DJ invalidation, and reload persistence.
-- [ ] Have the team verify this documentation against the finished app and explain the findings in its own words. Confirm the original starter prompt was retained and any additions were made before building; this draft does not establish that process history.
+- [x] Brandon confirmed team review of the documentation against the finished app; findings and corrections are explained above and in `results/final-verification.md`.
+- [ ] Confirm the original starter prompt was retained and any additions were made before building; the verification runs do not establish that process history.
 - [x] Fisher installed and technically tested the GitHub ZIP for `9975855a8c41480edfbd7dc93d7dac5db09f25b2` in a clean folder; environment, setup friction and results are recorded in `results/verification.md`. Download the final submission commit's matching ZIP and recheck any affected setup/features if it changes.
 - [x] Record technical ZIP checks for new instrumental/vocal songs, covers, library edits, default DJ, MP3-reference DJ, and one-item playlist controls/transition.
-- [ ] Complete human listening and a full multi-song sequence, including audible pause/resume, skip and non-overlap. WAV-reference behavior was not established by Fisher's MP3 test. Existing simulated failure/recovery tests cover a failure case; a deliberate live outage is not required.
-- [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. Human audible checks remain pending; Fisher's separate ZIP test is recorded below the capture evidence.
+- [x] Record Brandon's confirmation of personal listening and the completed browser two-song sequence, pause/resume, skip and inspected non-overlap. November 2 live checks also accepted MP3 and WAV references. Voice likeness was not separately assessed; a deliberate live outage was not required.
+- [x] Capture the queue playing bundled DJ speech for issue #7; browser state and source identity are recorded in `results/verification.md`. Brandon's later listening confirmation is recorded in the final verification findings; Fisher's historical ZIP test remains separate.
 - [ ] Review and package the screenshots and SVG at their relative paths alongside the final `README.md`.
-- [ ] Check the final package includes code, `pyproject.toml`, `uv.lock`, `.env.example`, documentation, sample manifest, three song MP3s, three DJ MP3s, and three covers. Exclude credentials, uploads, and voice references; previous audits do not establish that the final package is clean.
+- [x] Checked the GitHub-downloaded ZIP for `9dc926d`: code, dependency/configuration files, documentation and bundled sample media were present; no `.env`, runtime data, or virtual environment was included. Recheck a new matching ZIP after merging this documentation update; do not rezip a configured working folder.
 - [ ] Confirm every teammate's meaningful contribution and review of a teammate's work through issues/PRs, and instructor access through grading. Fisher approved documentation commit `4df1edc`; request confirmation of subsequent documentation changes before merge.
 - [ ] After documentation review and final verification, submit one shared repository link, exact commit ID, and the **GitHub-downloaded ZIP for that same version** on Canvas. Nothing has been submitted by this documentation edit.
 
