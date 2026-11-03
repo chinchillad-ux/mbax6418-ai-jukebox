@@ -518,7 +518,8 @@ import threading
 
 
 def test_second_generation_refused_while_in_flight(tmp_path, monkeypatch):
-    """A Generate/Retry click during a running generation is blocked."""
+    """A second Generate/Retry click during a running generation is blocked
+    at claim time, before it can enter the queue."""
     monkeypatch.chdir(tmp_path)
     started = threading.Event()
     release = threading.Event()
@@ -537,8 +538,9 @@ def test_second_generation_refused_while_in_flight(tmp_path, monkeypatch):
     outcomes = {}
 
     def run_first():
+        allowed, _unused, _unused = app.claim_generation_slot()
         outcomes["first"] = app.create_song(
-            "Pop", "Happy", 30, "Instrumental"
+            "Pop", "Happy", 30, "Instrumental", allowed
         )
 
     thread = threading.Thread(target=run_first)
@@ -546,8 +548,10 @@ def test_second_generation_refused_while_in_flight(tmp_path, monkeypatch):
     try:
         assert started.wait(5), "first generation did not start"
 
+        allowed2, _unused, _unused = app.claim_generation_slot()
+        assert allowed2 is False, "second claim should be rejected"
         audio, cover, message = app.create_song(
-            "Pop", "Happy", 30, "Instrumental"
+            "Pop", "Happy", 30, "Instrumental", allowed2
         )
         assert audio is None and cover is None
         assert "already" in message.lower()
@@ -571,15 +575,20 @@ def test_inflight_guard_releases_after_failure(tmp_path, monkeypatch):
 
     monkeypatch.setattr(app, "generate_song", failing_generate)
 
+    allowed, _unused, _unused = app.claim_generation_slot()
     _audio, _cover, message = app.create_song(
-        "Pop", "Happy", 30, "Vocals"
+        "Pop", "Happy", 30, "Vocals", allowed
     )
     assert "Music service unavailable" in message
 
+    allowed_again, _unused, _unused = app.claim_generation_slot()
+    assert allowed_again is True, "guard stayed locked after a failure"
+    app.release_generation_slot(True)
+
     _audio, _cover, message = app.create_song(
-        "Pop", "Happy", 30, "Vocals"
+        "Pop", "Happy", 30, "Vocals", allowed_again
     )
-    assert len(calls) == 2, "guard stayed locked after a failure"
+    assert len(calls) == 2, "second attempt must run after a failed one"
 
 
 # --- Professor QA findings: F5 (manifest.json must not 404) -----------------

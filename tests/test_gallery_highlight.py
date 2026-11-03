@@ -36,10 +36,13 @@ def test_highlight_second_cover(tmp_path):
 def test_coverless_track_clears_highlight(tmp_path):
     _seed(tmp_path)
     result = library_cover_selection("c")
-    assert result.get("selected_index") is None
+    # Must explicitly clear the previous selection, not merely skip it.
+    assert "selected_index" in result
+    assert result["selected_index"] is None
 
 
 def test_unknown_track_skips(tmp_path):
     _seed(tmp_path)
     result = library_cover_selection("missing")
     assert result is None or result.get("__type__") == "update"
+    assert "selected_index" not in result

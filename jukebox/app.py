@@ -25,14 +25,49 @@ from jukebox.library import Library, LibraryError
 from jukebox.dj import commentary_for_track, speak, DJError
 
 
-# One song generation at a time: a second Generate/Retry click while a
-# generation is in flight must not spawn a duplicate service pipeline.
+# One song generation at a time. Gradio's queue serializes clicks, so a
+# threading.Lock inside the handler cannot stop a second queued click:
+# it runs only after the first handler finishes and releases the lock.
+# Instead the button's click handler CLAIMS the slot synchronously at click
+# time; any further claim before the first pipeline finishes is rejected,
+# so duplicates never enter the queue.
 _generation_lock = threading.Lock()
 
 
-def create_song(style, mood, duration, vocal_mode):
-    """Generate a song and matching album cover."""
-    if not _generation_lock.acquire(blocking=False):
+def claim_generation_slot():
+    """Synchronously claim the single-generation slot at click time.
+
+    Runs outside Gradio's queue, so a duplicate click is rejected before it
+    enters the pipeline queue. Returns (allowed, disable_generate, disable_retry):
+    the claim result stored in State, and both buttons disabled for the
+    duration of the generation.
+    """
+    allowed = _generation_lock.acquire(blocking=False)
+    return allowed, gr.update(interactive=False), gr.update(interactive=False)
+
+
+def release_generation_slot(allowed):
+    """Release the lock if this click claimed it. Kept for direct callers."""
+    if allowed:
+        try:
+            _generation_lock.release()
+        except RuntimeError:  # noqa: B904 - already released; ignore.
+            pass
+    return gr.update(interactive=True), gr.update(interactive=True)
+
+
+def reenable_generation_buttons():
+    """Re-enable Generate/Retry after the pipeline (success or rejection) ends.
+
+    This step carries no state, so a duplicate click's chain cannot race the
+    first chain's State; rejecting a duplicate relies on the claim lock alone.
+    """
+    return gr.update(interactive=True), gr.update(interactive=True)
+
+
+def create_song(style, mood, duration, vocal_mode, allowed=True):
+    """Generate a song and matching album cover, unless the claim was rejected."""
+    if not allowed:
         return (
             None, None,
             "⚠️ A song generation is already in progress. "
@@ -41,8 +76,7 @@ def create_song(style, mood, duration, vocal_mode):
     try:
         return _create_song(style, mood, duration, vocal_mode)
     finally:
-        _generation_lock.release()
-
+        release_generation_slot(True)
 
 def _create_song(style, mood, duration, vocal_mode):
     """Generate a song and matching album cover."""
@@ -368,18 +402,20 @@ def library_cover_selection(track_id):
     """Highlight the album tile matching the currently selected song.
 
     The gallery shows only tracks with covers, so the selected index is the
-    position of the chosen track within that cover-bearing list.
+    position of the chosen track within that cover-bearing list. A track that
+    exists but has no cover must clear the previous highlight; only a
+    genuinely unknown ID is passed through unchanged.
     """
     try:
-        tracks = [
-            track for track in Library().list()
-            if track.cover_path
-        ]
+        all_tracks = Library().list()
+        tracks = [track for track in all_tracks if track.cover_path]
         if not track_id:
             return gr.update(selected_index=None)
         for index, track in enumerate(tracks):
             if track.id == track_id:
                 return gr.update(selected_index=index)
+        if any(track.id == track_id for track in all_tracks):
+            return gr.update(selected_index=None)
     except LibraryError:
         pass
     return gr.skip()
@@ -1472,23 +1508,29 @@ def build_app():
         # Cross-tab wiring that needs components from several tabs:
         # a song created (or imported) this session must be DJ-able
         # without manually refreshing the AI DJ picker first.
-        generate_btn.click(
-            fn=create_song,
-            inputs=[style, mood, duration, vocal_mode],
-            outputs=[song_preview, cover_preview, generation_status],
-            show_progress="full"
-        ).then(
-            fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
-        )
+        # The generation guard claims the slot synchronously at click time
+        # (queue=False), so a duplicate click never enters the pipeline queue.
+        generation_allowed = gr.State(False)
 
-        retry_btn.click(
-            fn=create_song,
-            inputs=[style, mood, duration, vocal_mode],
-            outputs=[song_preview, cover_preview, generation_status],
-            show_progress="full"
-        ).then(
-            fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
-        )
+        for button in (generate_btn, retry_btn):
+            button.click(
+                fn=claim_generation_slot,
+                inputs=[],
+                outputs=[generation_allowed, generate_btn, retry_btn],
+                queue=False,
+            ).then(
+                fn=create_song,
+                inputs=[style, mood, duration, vocal_mode, generation_allowed],
+                outputs=[song_preview, cover_preview, generation_status],
+                show_progress="full",
+            ).then(
+                fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
+            ).then(
+                fn=reenable_generation_buttons,
+                inputs=[],
+                outputs=[generate_btn, retry_btn],
+                queue=False,
+            )
 
         demo_btn.click(
             fn=import_demo_tracks,
