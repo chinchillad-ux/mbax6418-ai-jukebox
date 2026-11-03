@@ -25,49 +25,34 @@ from jukebox.library import Library, LibraryError
 from jukebox.dj import commentary_for_track, speak, DJError
 
 
-# One song generation at a time. Gradio's queue serializes clicks, so a
-# threading.Lock inside the handler cannot stop a second queued click:
-# it runs only after the first handler finishes and releases the lock.
-# Instead the button's click handler CLAIMS the slot synchronously at click
-# time; any further claim before the first pipeline finishes is rejected,
-# so duplicates never enter the queue.
+# One song generation at a time. Ownership is tied to each request: the
+# handler acquires the lock itself (non-blocking) and releases it in finally,
+# so there is no shared state a duplicate click could corrupt. Gradio's queue
+# serializes queued events, which would defeat such a lock, so the generation
+# click events run outside the queue (queue=False) and the buttons are
+# disabled while a generation is in flight as a second line of defense.
 _generation_lock = threading.Lock()
 
 
-def claim_generation_slot():
-    """Synchronously claim the single-generation slot at click time.
-
-    Runs outside Gradio's queue, so a duplicate click is rejected before it
-    enters the pipeline queue. Returns (allowed, disable_generate, disable_retry):
-    the claim result stored in State, and both buttons disabled for the
-    duration of the generation.
-    """
-    allowed = _generation_lock.acquire(blocking=False)
-    return allowed, gr.update(interactive=False), gr.update(interactive=False)
-
-
-def release_generation_slot(allowed):
-    """Release the lock if this click claimed it. Kept for direct callers."""
-    if allowed:
-        try:
-            _generation_lock.release()
-        except RuntimeError:  # noqa: B904 - already released; ignore.
-            pass
-    return gr.update(interactive=True), gr.update(interactive=True)
+def disable_generation_buttons():
+    """Disable Generate/Retry before a generation starts (queue=False)."""
+    return gr.update(interactive=False), gr.update(interactive=False)
 
 
 def reenable_generation_buttons():
-    """Re-enable Generate/Retry after the pipeline (success or rejection) ends.
-
-    This step carries no state, so a duplicate click's chain cannot race the
-    first chain's State; rejecting a duplicate relies on the claim lock alone.
-    """
+    """Re-enable Generate/Retry after the pipeline (success or failure) ends."""
     return gr.update(interactive=True), gr.update(interactive=True)
 
 
-def create_song(style, mood, duration, vocal_mode, allowed=True):
-    """Generate a song and matching album cover, unless the claim was rejected."""
-    if not allowed:
+def create_song(style, mood, duration, vocal_mode):
+    """Generate a song and matching album cover, one request at a time.
+
+    The lock is owned by the request: only the request that acquired it may
+    run the pipeline, and it always releases in finally (success or failure),
+    so a duplicate click can neither run a second pipeline nor strand the
+    lock.
+    """
+    if not _generation_lock.acquire(blocking=False):
         return (
             None, None,
             "⚠️ A song generation is already in progress. "
@@ -76,7 +61,7 @@ def create_song(style, mood, duration, vocal_mode, allowed=True):
     try:
         return _create_song(style, mood, duration, vocal_mode)
     finally:
-        release_generation_slot(True)
+        _generation_lock.release()
 
 def _create_song(style, mood, duration, vocal_mode):
     """Generate a song and matching album cover."""
@@ -1508,21 +1493,21 @@ def build_app():
         # Cross-tab wiring that needs components from several tabs:
         # a song created (or imported) this session must be DJ-able
         # without manually refreshing the AI DJ picker first.
-        # The generation guard claims the slot synchronously at click time
-        # (queue=False), so a duplicate click never enters the pipeline queue.
-        generation_allowed = gr.State(False)
-
+        # Queue=False is required here: Gradio's queue serializes events, which
+        # would let a second click run its handler only after the first has
+        # already released the generation lock. Running outside the queue means
+        # a duplicate click hits the acquired lock immediately and is rejected.
         for button in (generate_btn, retry_btn):
             button.click(
-                fn=claim_generation_slot,
+                fn=disable_generation_buttons,
                 inputs=[],
-                outputs=[generation_allowed, generate_btn, retry_btn],
+                outputs=[generate_btn, retry_btn],
                 queue=False,
             ).then(
                 fn=create_song,
-                inputs=[style, mood, duration, vocal_mode, generation_allowed],
+                inputs=[style, mood, duration, vocal_mode],
                 outputs=[song_preview, cover_preview, generation_status],
-                show_progress="full",
+                queue=False,
             ).then(
                 fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
             ).then(
