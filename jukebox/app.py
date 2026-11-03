@@ -2,6 +2,7 @@
 import gradio as gr
 
 import json
+import threading
 from jukebox.models import Track
 
 import ipaddress
@@ -24,7 +25,45 @@ from jukebox.library import Library, LibraryError
 from jukebox.dj import commentary_for_track, speak, DJError
 
 
+# One song generation at a time. Ownership is tied to each request: the
+# handler acquires the lock itself (non-blocking) and releases it in finally,
+# so there is no shared state a duplicate click could corrupt. Gradio's queue
+# serializes queued events, which would defeat such a lock, so the generation
+# click events run outside the queue (queue=False) and the buttons are
+# disabled while a generation is in flight as a second line of defense.
+_generation_lock = threading.Lock()
+
+
+def disable_generation_buttons():
+    """Disable Generate/Retry before a generation starts (queue=False)."""
+    return gr.update(interactive=False), gr.update(interactive=False)
+
+
+def reenable_generation_buttons():
+    """Re-enable Generate/Retry after the pipeline (success or failure) ends."""
+    return gr.update(interactive=True), gr.update(interactive=True)
+
+
 def create_song(style, mood, duration, vocal_mode):
+    """Generate a song and matching album cover, one request at a time.
+
+    The lock is owned by the request: only the request that acquired it may
+    run the pipeline, and it always releases in finally (success or failure),
+    so a duplicate click can neither run a second pipeline nor strand the
+    lock.
+    """
+    if not _generation_lock.acquire(blocking=False):
+        return (
+            None, None,
+            "⚠️ A song generation is already in progress. "
+            "Please wait for it to finish."
+        )
+    try:
+        return _create_song(style, mood, duration, vocal_mode)
+    finally:
+        _generation_lock.release()
+
+def _create_song(style, mood, duration, vocal_mode):
     """Generate a song and matching album cover."""
     try:
         track = generate_song(
@@ -205,6 +244,8 @@ def remove_and_refresh(track_id, playlist_ids):
     """
     unchanged = lambda message: (message, *(gr.skip() for _ in range(17)))
     if not track_id:
+        if not Library().list():
+            return unchanged("📭 No saved songs in your library yet. Generate a song, or click Load 3 Demo Songs.")
         return unchanged("⚠️ Select a saved song to remove.")
     try:
         removed = Library().remove(track_id)
@@ -283,6 +324,9 @@ def load_library():
             if track.cover_path
         ]
 
+        if not tracks:
+            return [], "📭 No saved songs in your library yet. Generate a song above, or click Load 3 Demo Songs to add the bundled samples."
+
         return covers, f"💿 You have {len(tracks)} saved song(s)."
 
     except LibraryError as error:
@@ -339,12 +383,37 @@ def browse_library_song(evt: gr.SelectData):
 
 
 
+def library_cover_selection(track_id):
+    """Highlight the album tile matching the currently selected song.
+
+    The gallery shows only tracks with covers, so the selected index is the
+    position of the chosen track within that cover-bearing list. A track that
+    exists but has no cover must clear the previous highlight; only a
+    genuinely unknown ID is passed through unchanged.
+    """
+    try:
+        all_tracks = Library().list()
+        tracks = [track for track in all_tracks if track.cover_path]
+        if not track_id:
+            return gr.update(selected_index=None)
+        for index, track in enumerate(tracks):
+            if track.id == track_id:
+                return gr.update(selected_index=index)
+        if any(track.id == track_id for track in all_tracks):
+            return gr.update(selected_index=None)
+    except LibraryError:
+        pass
+    return gr.skip()
+
+
 def select_saved_song(track_id):
     """Play any saved song, even without album artwork."""
     try:
         track = Library().get(track_id) if track_id else None
 
         if track is None:
+            if not Library().list():
+                return None, "📭 No saved songs in your library yet. Generate a song, or click Load 3 Demo Songs."
             return None, "⚠️ Please select a saved song."
 
         if not track.audio_path:
@@ -1018,22 +1087,6 @@ def build_app():
 
 
 
-            generate_btn.click(
-                fn=create_song,
-                inputs=[style, mood, duration, vocal_mode],
-                outputs=[song_preview, cover_preview, generation_status],
-                show_progress="full"
-            )
-            
-            retry_btn.click(
-                fn=create_song,
-                inputs=[style, mood, duration, vocal_mode],
-                outputs=[song_preview, cover_preview, generation_status],
-                show_progress="full"
-            )
-
-
-
         
         with gr.Tab("💿 My Library", elem_id="library-tab") as library_tab:
             gr.Markdown("## Your Music Collection")
@@ -1078,6 +1131,7 @@ def build_app():
                     )
                     for track in Library().list()
                 ],
+                value=None,
                 label="Choose Any Saved Song",
                 info="Includes songs waiting for album artwork."
             )
@@ -1116,6 +1170,9 @@ def build_app():
             saved_song_dropdown.change(
                 fn=load_song_editor, inputs=[saved_song_dropdown],
                 outputs=[song_title, cover_description, editor_cover]
+            ).then(
+                fn=library_cover_selection, inputs=[saved_song_dropdown],
+                outputs=[library_gallery]
             )
 
             
@@ -1139,21 +1196,6 @@ def build_app():
                 outputs=[editor_cover, edit_status, saved_song_dropdown], queue=False
             ).then(
                 fn=load_library, inputs=[], outputs=[library_gallery, library_status]
-            )
-
-
-                
-            
-
-          
-            demo_btn.click(
-                fn=import_demo_tracks,
-                inputs=[],
-                outputs=[library_gallery, library_status]
-            ).then(
-                fn=refresh_saved_song_choices,
-                inputs=[saved_song_dropdown],
-                outputs=[saved_song_dropdown]
             )
 
             refresh_btn.click(
@@ -1261,6 +1303,7 @@ def build_app():
                         (track.title, track.id)
                         for track in Library().list()
                     ],
+                    value=None,
                     label="Choose a Song",
                     show_label=False,
                     container=False,
@@ -1344,8 +1387,6 @@ def build_app():
                 playlist_preview = gr.Markdown(
                     "Your playlist is empty. Select songs above."
                 )
-
-
 
             refresh_dj_btn.click(
                 fn=refresh_dj_songs,
@@ -1464,8 +1505,45 @@ def build_app():
                 show_progress="full"
             )
 
+        # Cross-tab wiring that needs components from several tabs:
+        # a song created (or imported) this session must be DJ-able
+        # without manually refreshing the AI DJ picker first.
+        # Queue=False is required here: Gradio's queue serializes events, which
+        # would let a second click run its handler only after the first has
+        # already released the generation lock. Running outside the queue means
+        # a duplicate click hits the acquired lock immediately and is rejected.
+        for button in (generate_btn, retry_btn):
+            button.click(
+                fn=disable_generation_buttons,
+                inputs=[],
+                outputs=[generate_btn, retry_btn],
+                queue=False,
+            ).then(
+                fn=create_song,
+                inputs=[style, mood, duration, vocal_mode],
+                outputs=[song_preview, cover_preview, generation_status],
+                queue=False,
+            ).then(
+                fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
+            ).then(
+                fn=reenable_generation_buttons,
+                inputs=[],
+                outputs=[generate_btn, retry_btn],
+                queue=False,
+            )
 
-      
+        demo_btn.click(
+            fn=import_demo_tracks,
+            inputs=[],
+            outputs=[library_gallery, library_status]
+        ).then(
+            fn=refresh_saved_song_choices,
+            inputs=[saved_song_dropdown],
+            outputs=[saved_song_dropdown]
+        ).then(
+            fn=refresh_dj_songs, inputs=[], outputs=[dj_song, playlist_selector]
+        )
+
         rename_btn.click(
             fn=rename_and_refresh, inputs=[saved_song_dropdown, song_title],
             outputs=[rename_status, library_gallery, saved_song_dropdown, dj_song,
@@ -1605,5 +1683,15 @@ def build_app():
     return demo
 
 
+def launch_server(**kwargs):
+    """Start the production server with PWA manifest support.
+
+    Gradio's frontend requests /manifest.json on every page load; the
+    manifest endpoint only answers while PWA mode is enabled, so without
+    it every load logs a 404 in the console.
+    """
+    return build_app().launch(pwa=True, **kwargs)
+
+
 if __name__ == "__main__":
-    build_app().launch()
+    launch_server()
