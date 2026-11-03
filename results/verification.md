@@ -131,6 +131,10 @@ On 2026-11-02 the GitHub ZIP for commit `9dc926dccda13d4f75eedd9d8dda18fa37e252a
 was downloaded and verified: all 66 files byte-identical to the repository
 blobs, the three bundled songs/covers/DJ clips present, no `.env`, no `data/`,
 no credentials. ZIP SHA-256 `f31230201c2700cf8ab4c71e7ca07395f7dc6971130d26d6351affe82398fa9f`.
-A teammate ZIP installation test of this exact commit is the remaining
-verification step (Brandon's code review and Fisher's earlier ZIP test covered
-the preceding versions).
+At the time of this byte-verification, the teammate installation test was
+pending. Brandon subsequently recorded Windows installation and technical
+checks of this `9dc926d` ZIP in [final-verification.md](final-verification.md),
+including 263 passing tests and the OneDrive copy-mode setup correction.
+Those final-ZIP checks are distinct from the earlier live feature checks.
+After the documentation is merged, download the matching submission ZIP and
+update the submitted commit ID/PDF; the tested archive remains historical evidence.
