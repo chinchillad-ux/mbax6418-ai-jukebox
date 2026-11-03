@@ -84,3 +84,53 @@ Date: October 27, 2026 (America/Denver)
 **Human-judgment boundary:** no person listened to the generated instrumental, generated vocal, default DJ output, or custom-reference DJ output during this verification. The technical checks establish non-empty decoded files, brief playback start, UI state, and browser timing—not perceived intelligibility, sound quality, voice likeness, or subjective absence of audible overlap.
 
 **Fixes needed before app-code changes:** none observed. The only setup friction was the missing FFmpeg/ffprobe prerequisite, which the README identifies but does not provide platform-specific installation commands for. Consider documenting an OS-specific installation pointer before final submission; this verification did not change app code.
+
+## Final pre-submission verification (recorded October 27 - November 3, 2026)
+
+### Full three-song DJ sequence (automated browser transport check)
+
+Recorded 2026-10-27 against merged main `ab52ae0` (the playback transport is
+unchanged in the final submission candidate `9dc926d`). Queuing Copper Sunrise →
+Rain on Glass → Neon Night Drive and clicking Start DJ Set produced, with no
+further interaction:
+
+`Now introducing: Copper Sunrise` → `Now playing: Copper Sunrise` → `Now
+introducing: Rain on Glass` → `Now playing: Rain on Glass` → `Now introducing:
+Neon Night Drive` → `Now playing: Neon Night Drive` → `Your DJ set is complete!`
+
+At every phase the single active (unpaused) audio element's bytes were SHA-256
+identical to the expected bundled speech/music file, `paused=false`, time
+advanced, pause/resume and skip worked, and a document-wide shadow-DOM scan
+found exactly one unpaused audio element. Zero page errors. This is automated
+transport evidence; it is not a human listening judgment.
+
+### WAV-reference custom-voice DJ (live class-service test)
+
+Recorded 2026-10-27 against the running merged app: a 14.08 s mono WAV voice
+reference was uploaded through the Custom Voice panel for the user-generated
+track "Dreamy Country"; Chatterbox produced a playable 231,212-byte MP3
+(24 kHz mono, 14.36 s, ffprobe-valid, SHA-256
+`d62f9afb26d2abd09d60e67d67dc0cea509770dfec6c946a160de2f27175f5bf`) that played
+in the UI preview (blob SHA identical to the persisted file). The reference
+remained only under ignored `data/voice-refs/`. Bundled sample intros were
+unchanged. The track's `dj_audio_path` and commentary were persisted.
+
+### Human listening check (project owner)
+
+On 2026-10-28 the project owner listened to the running merged app and
+confirmed: (1) the three-demo-song set played DJ speech → music → DJ speech →
+music with clear, understandable speech and no audible overlap; (2) a generated
+song's DJ introduction played correctly after the speech-model configuration
+fix; (3) pause/resume and skip behaved as expected. WAV custom-voice output was
+also played back and sounded correct. This is the human audible-check evidence
+for the final flows; voice-likeness judgment is informal.
+
+### Final submission ZIP byte-verification
+
+On 2026-11-02 the GitHub ZIP for commit `9dc926dccda13d4f75eedd9d8dda18fa37e252a5`
+was downloaded and verified: all 66 files byte-identical to the repository
+blobs, the three bundled songs/covers/DJ clips present, no `.env`, no `data/`,
+no credentials. ZIP SHA-256 `f31230201c2700cf8ab4c71e7ca07395f7dc6971130d26d6351affe82398fa9f`.
+A teammate ZIP installation test of this exact commit is the remaining
+verification step (Brandon's code review and Fisher's earlier ZIP test covered
+the preceding versions).
